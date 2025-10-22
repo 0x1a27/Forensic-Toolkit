@@ -15,7 +15,7 @@
 #define LOG_FILE "ftk_audit.log"
 #define MAX_TAB_MATCHES 50
 
-// ±àÒëÖ¸Ê¾
+// ç¼–è¯‘æŒ‡ç¤º
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "advapi32.lib")
@@ -24,7 +24,7 @@
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "ntdll.lib")
 
-// À©Õ¹²å¼ş½Ó¿Ú - ÔÊĞí²å¼şĞŞ¸ÄÖ÷³ÌĞò
+// æ‰©å±•æ’ä»¶æ¥å£ - å…è®¸æ’ä»¶ä¿®æ”¹ä¸»ç¨‹åº
 typedef struct {
     char banner_text[256];
     char welcome_message[256];
@@ -32,18 +32,18 @@ typedef struct {
     int hide_sensitive_info;
 } FTK_MAIN_CONFIG;
 
-// È«¾ÖÅäÖÃ
+// å…¨å±€é…ç½®
 FTK_MAIN_CONFIG g_main_config = {
-    "Forensic Toolkit (FTK) - ½ø³ÌÈ¡Ö¤·ÖÎö",
-    "°æ±¾ 2.2 | ½ô¼±±ÜÏÕÏµÍ³ | ¶¯Ì¬²å¼ş¼Ü¹¹",
+    "Forensic Toolkit (FTK) - è¿›ç¨‹å–è¯åˆ†æ",
+    "ç‰ˆæœ¬ 2.2 | åŠ¨æ€æ’ä»¶æ¶æ„",
     1,  // enable_advanced_features
     0   // hide_sensitive_info
 };
 
-// ²å¼ş»Øµ÷º¯ÊıÀàĞÍ
+// æ’ä»¶å›è°ƒå‡½æ•°ç±»å‹
 typedef void (*FTK_PLUGIN_CONFIG_CALLBACK)(FTK_MAIN_CONFIG* config);
 
-// Êı¾İ½á¹¹
+// æ•°æ®ç»“æ„
 typedef struct {
     DWORD pid;
     DWORD parent_pid;
@@ -55,14 +55,14 @@ typedef struct {
     DWORD session_id;
 } ProcessInfo;
 
-// À©Õ¹²å¼şº¯ÊıÖ¸ÕëÀàĞÍ¶¨Òå
+// æ‰©å±•æ’ä»¶å‡½æ•°æŒ‡é’ˆç±»å‹å®šä¹‰
 typedef int (*FTK_PLUGIN_INIT)(void);
 typedef int (*FTK_PLUGIN_EXECUTE)(const char* args);
 typedef void (*FTK_PLUGIN_HELP)(void);
 typedef const char* (*FTK_PLUGIN_INFO)(void);
-typedef void (*FTK_PLUGIN_CONFIG)(FTK_MAIN_CONFIG* config);  // ĞÂÔöÅäÖÃ»Øµ÷
+typedef void (*FTK_PLUGIN_CONFIG)(FTK_MAIN_CONFIG* config);  // æ–°å¢é…ç½®å›è°ƒ
 
-// À©Õ¹²å¼ş½á¹¹Ìå
+// æ‰©å±•æ’ä»¶ç»“æ„ä½“
 typedef struct {
     char name[64];
     char description[128];
@@ -71,23 +71,23 @@ typedef struct {
     FTK_PLUGIN_EXECUTE execute_func;
     FTK_PLUGIN_HELP help_func;
     FTK_PLUGIN_INFO info_func;
-    FTK_PLUGIN_CONFIG config_func;  // ÅäÖÃ»Øµ÷º¯Êı
+    FTK_PLUGIN_CONFIG config_func;  // é…ç½®å›è°ƒå‡½æ•°
 } Plugin;
 
-// È«¾Ö±äÁ¿
+// å…¨å±€å˜é‡
 ProcessInfo g_process_list[MAX_PROCESSES];
 int g_process_count = 0;
 Plugin g_plugins[MAX_PLUGINS];
 int g_plugin_count = 0;
 
-// ÊäÈëÏµÍ³Ïà¹Ø±äÁ¿
+// è¾“å…¥ç³»ç»Ÿç›¸å…³å˜é‡
 char g_command_history[100][MAX_COMMAND_LENGTH];
 int g_history_count = 0;
 int g_history_index = 0;
 char g_current_input[MAX_COMMAND_LENGTH] = "";
 int g_cursor_pos = 0;
 
-// º¯ÊıÉùÃ÷
+// å‡½æ•°å£°æ˜
 void ftk_banner();
 void ftk_print_help();
 void ftk_load_plugins(int silent);
@@ -98,7 +98,7 @@ void ftk_plugin_help(const char* plugin_name);
 int ftk_execute_plugin(const char* plugin_name, const char* args);
 const char* ftk_stristr(const char* str, const char* substr);
 
-// ÑÕÉ«Êä³öº¯Êı
+// é¢œè‰²è¾“å‡ºå‡½æ•°
 void ftk_print_error(const char* format, ...);
 void ftk_print_success(const char* format, ...);
 void ftk_print_warning(const char* format, ...);
@@ -109,7 +109,7 @@ void ftk_print_system(const char* format, ...);
 void ftk_enable_virtual_terminal();
 void ftk_set_color(int color);
 
-// ºËĞÄ¹¦ÄÜº¯Êı
+// æ ¸å¿ƒåŠŸèƒ½å‡½æ•°
 void ftk_refresh_process_list();
 int ftk_list_processes(int detailed);
 void ftk_create_process(const char* command);
@@ -126,12 +126,12 @@ void ftk_log_operation(const char* operation, const char* target, int success);
 char* ftk_get_username_from_pid(DWORD pid);
 char* ftk_format_time(FILETIME* ft);
 
-// ½ô¼±±ÜÏÕ¹¦ÄÜ
+// ç´§æ€¥é¿é™©åŠŸèƒ½
 void ftk_trigger_bsod();
 int ftk_is_system_process(DWORD pid);
 void ftk_emergency_shutdown();
 
-// ¸Ä½øµÄÊäÈëÏµÍ³º¯Êı
+// æ”¹è¿›çš„è¾“å…¥ç³»ç»Ÿå‡½æ•°
 void ftk_init_input_system();
 char* ftk_tab_complete(const char* current_input, int* match_count, char matches[][MAX_COMMAND_LENGTH]);
 void ftk_add_to_history(const char* command);
@@ -147,7 +147,7 @@ void ftk_handle_backspace(char* buffer, int* pos);
 void ftk_handle_delete(char* buffer, int* pos);
 void ftk_handle_home_end(int ext_ch, char* buffer, int* pos);
 
-// ÃüÁîÁĞ±í
+// å‘½ä»¤åˆ—è¡¨
 const char* g_commands[] = {
     "help", "exit", "quit", "list", "list -d", "list detailed",
     "create", "kill", "kill -f", "killbyname", "details", 
@@ -157,11 +157,11 @@ const char* g_commands[] = {
 };
 const int g_command_count = sizeof(g_commands) / sizeof(g_commands[0]);
 
-// BSODÏà¹Øº¯ÊıÉùÃ÷ (ĞèÒªntdll.lib)
+// BSODç›¸å…³å‡½æ•°å£°æ˜ (éœ€è¦ntdll.lib)
 typedef NTSTATUS (NTAPI* pdef_RtlAdjustPrivilege)(ULONG Privilege, BOOLEAN Enable, BOOLEAN CurrentThread, PBOOLEAN Enabled);
 typedef NTSTATUS (NTAPI* pdef_NtRaiseHardError)(NTSTATUS ErrorStatus, ULONG NumberOfParameters, ULONG UnicodeStringParameterMask, PULONG_PTR Parameters, ULONG ResponseOption, PULONG Response);
 
-// ÆôÓÃĞéÄâÖÕ¶Ë´¦Àí
+// å¯ç”¨è™šæ‹Ÿç»ˆç«¯å¤„ç†
 void ftk_enable_virtual_terminal() {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut == INVALID_HANDLE_VALUE) return;
@@ -173,13 +173,13 @@ void ftk_enable_virtual_terminal() {
     SetConsoleMode(hOut, dwMode);
 }
 
-// ÉèÖÃÑÕÉ«º¯Êı
+// è®¾ç½®é¢œè‰²å‡½æ•°
 void ftk_set_color(int color) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, color);
 }
 
-// ÑÕÉ«Êä³öº¯ÊıÊµÏÖ - Ê¹ÓÃWindows¿ØÖÆÌ¨API
+// é¢œè‰²è¾“å‡ºå‡½æ•°å®ç° - ä½¿ç”¨Windowsæ§åˆ¶å°API
 void ftk_print_error(const char* format, ...) {
     ftk_set_color(FOREGROUND_RED | FOREGROUND_INTENSITY);
     va_list args;
@@ -211,7 +211,7 @@ void ftk_print_warning(const char* format, ...) {
 }
 
 void ftk_print_info(const char* format, ...) {
-    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY); // ÇàÉ«
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY); // é’è‰²
     va_list args;
     va_start(args, format);
     vprintf(format, args);
@@ -221,7 +221,7 @@ void ftk_print_info(const char* format, ...) {
 }
 
 void ftk_print_debug(const char* format, ...) {
-    ftk_set_color(FOREGROUND_INTENSITY); // »ÒÉ«
+    ftk_set_color(FOREGROUND_INTENSITY); // ç°è‰²
     va_list args;
     va_start(args, format);
     vprintf(format, args);
@@ -231,7 +231,7 @@ void ftk_print_debug(const char* format, ...) {
 }
 
 void ftk_print_plugin(const char* format, ...) {
-    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY); // ×ÏÉ«
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY); // ç´«è‰²
     va_list args;
     va_start(args, format);
     vprintf(format, args);
@@ -250,7 +250,7 @@ void ftk_print_system(const char* format, ...) {
     fflush(stdout);
 }
 
-// ×Ô¶¨Òå²»Çø·Ö´óĞ¡Ğ´µÄ×Ö·û´®ËÑË÷º¯Êı
+// è‡ªå®šä¹‰ä¸åŒºåˆ†å¤§å°å†™çš„å­—ç¬¦ä¸²æœç´¢å‡½æ•°
 const char* ftk_stristr(const char* str, const char* substr) {
     if (str == NULL || substr == NULL || *substr == '\0') return NULL;
     
@@ -273,13 +273,13 @@ const char* ftk_stristr(const char* str, const char* substr) {
     return NULL;
 }
 
-// ÉèÖÃ¿ØÖÆÌ¨±àÂëÎªGBK£¨ÖĞÎÄWindowsÄ¬ÈÏ±àÂë£©
+// è®¾ç½®æ§åˆ¶å°ç¼–ç ä¸ºGBKï¼ˆä¸­æ–‡Windowsé»˜è®¤ç¼–ç ï¼‰
 void setup_console_encoding() {
     SetConsoleOutputCP(936);
     SetConsoleCP(936);
 }
 
-// ³õÊ¼»¯ÊäÈëÏµÍ³
+// åˆå§‹åŒ–è¾“å…¥ç³»ç»Ÿ
 void ftk_init_input_system() {
     g_history_count = 0;
     g_history_index = 0;
@@ -288,7 +288,7 @@ void ftk_init_input_system() {
     memset(g_current_input, 0, sizeof(g_current_input));
 }
 
-// Çå³ıµ±Ç°ĞĞ
+// æ¸…é™¤å½“å‰è¡Œ
 void ftk_clear_line(int length) {
     printf("\r");
     for (int i = 0; i < length + 50; i++) {
@@ -297,17 +297,17 @@ void ftk_clear_line(int length) {
     printf("\r");
 }
 
-// ´òÓ¡ÌáÊ¾·û
+// æ‰“å°æç¤ºç¬¦
 void ftk_print_prompt() {
     ftk_set_color(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
     printf("\rForensic_Toolkit> ");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 }
 
-// ÏÔÊ¾Æ¥ÅäÁĞ±í
+// æ˜¾ç¤ºåŒ¹é…åˆ—è¡¨
 void ftk_display_matches(char matches[][MAX_COMMAND_LENGTH], int match_count) {
     printf("\n");
-    int cols = 3; // Ã¿ĞĞÏÔÊ¾3¸ö
+    int cols = 3; // æ¯è¡Œæ˜¾ç¤º3ä¸ª
     int rows = (match_count + cols - 1) / cols;
     
     for (int i = 0; i < rows; i++) {
@@ -325,7 +325,7 @@ void ftk_display_matches(char matches[][MAX_COMMAND_LENGTH], int match_count) {
     printf("\n");
 }
 
-// ²éÕÒ¹²Í¬Ç°×º
+// æŸ¥æ‰¾å…±åŒå‰ç¼€
 char* ftk_find_common_prefix(char matches[][MAX_COMMAND_LENGTH], int match_count) {
     static char common_prefix[MAX_COMMAND_LENGTH];
     if (match_count == 0) return NULL;
@@ -339,34 +339,34 @@ char* ftk_find_common_prefix(char matches[][MAX_COMMAND_LENGTH], int match_count
             j++;
         }
         common_prefix[j] = '\0';
-        if (j == 0) break; // Ã»ÓĞ¹²Í¬Ç°×º
+        if (j == 0) break; // æ²¡æœ‰å…±åŒå‰ç¼€
     }
     
     return common_prefix;
 }
 
-// Tab²¹È«º¯Êı - ÓÅ»¯°æ±¾
+// Tabè¡¥å…¨å‡½æ•° - ä¼˜åŒ–ç‰ˆæœ¬
 char* ftk_tab_complete(const char* current_input, int* match_count, char matches[][MAX_COMMAND_LENGTH]) {
     *match_count = 0;
     
-    // Èç¹ûÊäÈëÎª¿Õ£¬ÏÔÊ¾ËùÓĞ¿ÉÓÃÃüÁî
+    // å¦‚æœè¾“å…¥ä¸ºç©ºï¼Œæ˜¾ç¤ºæ‰€æœ‰å¯ç”¨å‘½ä»¤
     if (strlen(current_input) == 0) {
         ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-        printf("\n¿ÉÓÃÃüÁî (%d¸ö):", g_command_count + g_plugin_count);
+        printf("\nå¯ç”¨å‘½ä»¤ (%dä¸ª):", g_command_count + g_plugin_count);
         ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         printf("\n");
         
-        // ÏÔÊ¾ÄÚÖÃÃüÁî
+        // æ˜¾ç¤ºå†…ç½®å‘½ä»¤
         ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-        printf("ÄÚÖÃÃüÁî:");
+        printf("å†…ç½®å‘½ä»¤:");
         ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         printf("\n");
         ftk_display_matches((char(*)[MAX_COMMAND_LENGTH])g_commands, g_command_count);
         
-        // ÏÔÊ¾²å¼şÃüÁî
+        // æ˜¾ç¤ºæ’ä»¶å‘½ä»¤
         if (g_plugin_count > 0) {
             ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY);
-            printf("²å¼şÃüÁî:");
+            printf("æ’ä»¶å‘½ä»¤:");
             ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
             printf("\n");
             for (int i = 0; i < g_plugin_count; i++) {
@@ -378,7 +378,7 @@ char* ftk_tab_complete(const char* current_input, int* match_count, char matches
         return NULL;
     }
     
-    // ËÑË÷ÄÚÖÃÃüÁî
+    // æœç´¢å†…ç½®å‘½ä»¤
     for (int i = 0; i < g_command_count; i++) {
         if (strncmp(g_commands[i], current_input, strlen(current_input)) == 0) {
             strcpy_s(matches[*match_count], MAX_COMMAND_LENGTH, g_commands[i]);
@@ -387,7 +387,7 @@ char* ftk_tab_complete(const char* current_input, int* match_count, char matches
         }
     }
     
-    // ËÑË÷²å¼şÃüÁî
+    // æœç´¢æ’ä»¶å‘½ä»¤
     for (int i = 0; i < g_plugin_count; i++) {
         if (strncmp(g_plugins[i].name, current_input, strlen(current_input)) == 0) {
             strcpy_s(matches[*match_count], MAX_COMMAND_LENGTH, g_plugins[i].name);
@@ -397,17 +397,17 @@ char* ftk_tab_complete(const char* current_input, int* match_count, char matches
     }
     
     if (*match_count == 0) {
-        printf("\a"); // ·äÃùÉùÌáÊ¾ÎŞÆ¥Åä
+        printf("\a"); // èœ‚é¸£å£°æç¤ºæ— åŒ¹é…
         return NULL;
     }
     else if (*match_count == 1) {
-        // Ö»ÓĞÒ»¸öÆ¥Åä£¬Ö±½Ó²¹È«
+        // åªæœ‰ä¸€ä¸ªåŒ¹é…ï¼Œç›´æ¥è¡¥å…¨
         return matches[0];
     }
     else {
-        // ¶à¸öÆ¥Åä£¬ÏÔÊ¾ÁĞ±í²¢·µ»Ø¹²Í¬Ç°×º
+        // å¤šä¸ªåŒ¹é…ï¼Œæ˜¾ç¤ºåˆ—è¡¨å¹¶è¿”å›å…±åŒå‰ç¼€
         ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-        printf("\nÕÒµ½ %d ¸öÆ¥Åä:", *match_count);
+        printf("\næ‰¾åˆ° %d ä¸ªåŒ¹é…:", *match_count);
         ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         printf("\n");
         ftk_display_matches(matches, *match_count);
@@ -421,13 +421,13 @@ char* ftk_tab_complete(const char* current_input, int* match_count, char matches
     return NULL;
 }
 
-// ¸üĞÂÏÔÊ¾
+// æ›´æ–°æ˜¾ç¤º
 void ftk_update_display(char* buffer, int pos, int max_len) {
     ftk_clear_line((int)strlen(buffer));
     ftk_print_prompt();
     printf("%s", buffer);
     
-    // ÖØĞÂ¶¨Î»¹â±ê
+    // é‡æ–°å®šä½å…‰æ ‡
     int current_len = (int)strlen(buffer);
     if (pos < current_len) {
         for (int i = current_len; i > pos; i--) {
@@ -437,9 +437,9 @@ void ftk_update_display(char* buffer, int pos, int max_len) {
     fflush(stdout);
 }
 
-// ´¦Àí·½Ïò¼ü
+// å¤„ç†æ–¹å‘é”®
 void ftk_handle_arrow_keys(int ext_ch, char* buffer, int* pos, int max_len) {
-    if (ext_ch == 72) { // ÉÏ¼ıÍ·
+    if (ext_ch == 72) { // ä¸Šç®­å¤´
         if (g_history_count > 0) {
             if (g_history_index > 0) {
                 g_history_index--;
@@ -450,7 +450,7 @@ void ftk_handle_arrow_keys(int ext_ch, char* buffer, int* pos, int max_len) {
             ftk_update_display(buffer, *pos, max_len);
         }
     }
-    else if (ext_ch == 80) { // ÏÂ¼ıÍ·
+    else if (ext_ch == 80) { // ä¸‹ç®­å¤´
         if (g_history_count > 0) {
             if (g_history_index < g_history_count - 1) {
                 g_history_index++;
@@ -466,13 +466,13 @@ void ftk_handle_arrow_keys(int ext_ch, char* buffer, int* pos, int max_len) {
             ftk_update_display(buffer, *pos, max_len);
         }
     }
-    else if (ext_ch == 75) { // ×ó¼ıÍ·
+    else if (ext_ch == 75) { // å·¦ç®­å¤´
         if (*pos > 0) {
             (*pos)--;
             printf("\b");
         }
     }
-    else if (ext_ch == 77) { // ÓÒ¼ıÍ·
+    else if (ext_ch == 77) { // å³ç®­å¤´
         if (*pos < (int)strlen(buffer)) {
             printf("%c", buffer[*pos]);
             (*pos)++;
@@ -480,7 +480,7 @@ void ftk_handle_arrow_keys(int ext_ch, char* buffer, int* pos, int max_len) {
     }
 }
 
-// ´¦ÀíHome/End¼ü
+// å¤„ç†Home/Endé”®
 void ftk_handle_home_end(int ext_ch, char* buffer, int* pos) {
     if (ext_ch == 71) { // Home
         while (*pos > 0) {
@@ -496,7 +496,7 @@ void ftk_handle_home_end(int ext_ch, char* buffer, int* pos) {
     }
 }
 
-// ´¦ÀíÍË¸ñ¼ü
+// å¤„ç†é€€æ ¼é”®
 void ftk_handle_backspace(char* buffer, int* pos) {
     if (*pos > 0) {
         (*pos)--;
@@ -507,7 +507,7 @@ void ftk_handle_backspace(char* buffer, int* pos) {
     }
 }
 
-// ´¦ÀíDelete¼ü
+// å¤„ç†Deleteé”®
 void ftk_handle_delete(char* buffer, int* pos) {
     if (*pos < (int)strlen(buffer)) {
         for (int i = *pos; i < (int)strlen(buffer); i++) {
@@ -517,11 +517,11 @@ void ftk_handle_delete(char* buffer, int* pos) {
     }
 }
 
-// Ìí¼Óµ½ÀúÊ·¼ÇÂ¼
+// æ·»åŠ åˆ°å†å²è®°å½•
 void ftk_add_to_history(const char* command) {
     if (strlen(command) == 0) return;
     
-    // ±ÜÃâÖØ¸´Ìí¼ÓÏàÍ¬µÄÃüÁî
+    // é¿å…é‡å¤æ·»åŠ ç›¸åŒçš„å‘½ä»¤
     if (g_history_count > 0 && strcmp(g_command_history[g_history_count - 1], command) == 0) {
         return;
     }
@@ -530,7 +530,7 @@ void ftk_add_to_history(const char* command) {
         strcpy_s(g_command_history[g_history_count], MAX_COMMAND_LENGTH, command);
         g_history_count++;
     } else {
-        // ÀúÊ·¼ÇÂ¼ÒÑÂú£¬ÒÆ³ı×î¾ÉµÄ¼ÇÂ¼
+        // å†å²è®°å½•å·²æ»¡ï¼Œç§»é™¤æœ€æ—§çš„è®°å½•
         for (int i = 0; i < 99; i++) {
             strcpy_s(g_command_history[i], MAX_COMMAND_LENGTH, g_command_history[i + 1]);
         }
@@ -539,10 +539,10 @@ void ftk_add_to_history(const char* command) {
     g_history_index = g_history_count;
 }
 
-// ÏÔÊ¾ÃüÁîÀúÊ·
+// æ˜¾ç¤ºå‘½ä»¤å†å²
 void ftk_show_command_history() {
     ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    printf("\n=== ÃüÁîÀúÊ· (%dÌõ) ===", g_history_count);
+    printf("\n=== å‘½ä»¤å†å² (%dæ¡) ===", g_history_count);
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     printf("\n\n");
     for (int i = 0; i < g_history_count; i++) {
@@ -553,7 +553,7 @@ void ftk_show_command_history() {
     }
 }
 
-// ÊäÈëº¯Êı - ÓÅ»¯°æ±¾
+// è¾“å…¥å‡½æ•° - ä¼˜åŒ–ç‰ˆæœ¬
 int ftk_readline(char* buffer, int max_len) {
     int pos = 0;
     int ch;
@@ -595,7 +595,7 @@ int ftk_readline(char* buffer, int max_len) {
             ftk_handle_arrow_keys(ext_ch, buffer, &pos, max_len);
             ftk_handle_home_end(ext_ch, buffer, &pos);
             
-            if (ext_ch == 83) { // Delete¼ü
+            if (ext_ch == 83) { // Deleteé”®
                 ftk_handle_delete(buffer, &pos);
             }
         }
@@ -613,7 +613,7 @@ int ftk_readline(char* buffer, int max_len) {
             ftk_banner();
             ftk_print_prompt();
             printf("%s", buffer);
-            // ÖØĞÂ¶¨Î»¹â±ê
+            // é‡æ–°å®šä½å…‰æ ‡
             int current_len = (int)strlen(buffer);
             if (pos < current_len) {
                 for (int i = current_len; i > pos; i--) {
@@ -622,7 +622,7 @@ int ftk_readline(char* buffer, int max_len) {
             }
         }
         else if (pos < max_len - 1 && ch >= 32 && ch <= 126) {
-            // ²åÈë×Ö·û
+            // æ’å…¥å­—ç¬¦
             if (pos < (int)strlen(buffer)) {
                 for (int i = (int)strlen(buffer); i >= pos; i--) {
                     buffer[i + 1] = buffer[i];
@@ -640,27 +640,27 @@ int ftk_readline(char* buffer, int max_len) {
     }
 }
 
-// ´¥·¢À¶ÆÁ½ô¼±±ÜÏÕ
+// è§¦å‘è“å±ç´§æ€¥é¿é™©
 void ftk_trigger_bsod() {
-    ftk_print_warning("\n[!!! ½ô¼±¾¯¸æ !!!]\n");
-    ftk_print_warning("Äú¼´½«´¥·¢ÏµÍ³À¶ÆÁ½ô¼±±ÜÏÕ£¡\n");
-    ftk_print_warning("Õâ½«µ¼ÖÂÏµÍ³Á¢¼´±ÀÀ£²¢ÖØÆô£¡\n");
-    ftk_print_warning("ËùÓĞÎ´±£´æµÄÊı¾İ½«»á¶ªÊ§£¡\n\n");
+    ftk_print_warning("\n[!!! ç´§æ€¥è­¦å‘Š !!!]\n");
+    ftk_print_warning("æ‚¨å³å°†è§¦å‘ç³»ç»Ÿè“å±ç´§æ€¥é¿é™©ï¼\n");
+    ftk_print_warning("è¿™å°†å¯¼è‡´ç³»ç»Ÿç«‹å³å´©æºƒå¹¶é‡å¯ï¼\n");
+    ftk_print_warning("æ‰€æœ‰æœªä¿å­˜çš„æ•°æ®å°†ä¼šä¸¢å¤±ï¼\n\n");
     
-    printf("È·ÈÏÖ´ĞĞ£¿(ÊäÈë 'CONFIRM_BSOD' ¼ÌĞø): ");
+    printf("ç¡®è®¤æ‰§è¡Œï¼Ÿ(è¾“å…¥ 'CONFIRM_BSOD' ç»§ç»­): ");
     char confirmation[64];
     if (fgets(confirmation, sizeof(confirmation), stdin) != NULL) {
         confirmation[strcspn(confirmation, "\n")] = 0;
         if (strcmp(confirmation, "CONFIRM_BSOD") == 0) {
-            ftk_print_error("\n[½ô¼±±ÜÏÕ] ´¥·¢ÏµÍ³À¶ÆÁ...\n");
-            ftk_print_error("ÏµÍ³½«ÔÚ3Ãëºó±ÀÀ£...\n");
+            ftk_print_error("\n[ç´§æ€¥é¿é™©] è§¦å‘ç³»ç»Ÿè“å±...\n");
+            ftk_print_error("ç³»ç»Ÿå°†åœ¨3ç§’åå´©æºƒ...\n");
             
             for (int i = 3; i > 0; i--) {
                 ftk_print_error("%d...\n", i);
                 Sleep(1000);
             }
             
-            // ·½·¨1: Ê¹ÓÃNTAPI´¥·¢À¶ÆÁ
+            // æ–¹æ³•1: ä½¿ç”¨NTAPIè§¦å‘è“å±
             HMODULE hNtdll = LoadLibraryA("ntdll.dll");
             if (hNtdll) {
                 pdef_RtlAdjustPrivilege RtlAdjustPrivilege = (pdef_RtlAdjustPrivilege)GetProcAddress(hNtdll, "RtlAdjustPrivilege");
@@ -668,29 +668,29 @@ void ftk_trigger_bsod() {
                 
                 if (RtlAdjustPrivilege && NtRaiseHardError) {
                     BOOLEAN Enabled;
-                    // ÆôÓÃµ÷ÊÔÈ¨ÏŞ
+                    // å¯ç”¨è°ƒè¯•æƒé™
                     RtlAdjustPrivilege(19, TRUE, FALSE, &Enabled);
-                    // ´¥·¢À¶ÆÁ
+                    // è§¦å‘è“å±
                     ULONG Response;
                     NtRaiseHardError(STATUS_ASSERTION_FAILURE, 0, 0, NULL, 6, &Response);
                 }
                 FreeLibrary(hNtdll);
             }
             
-            // ·½·¨2: Èç¹ûNTAPIÊ§°Ü£¬³¢ÊÔÖÕÖ¹¹Ø¼üÏµÍ³½ø³Ì
-            ftk_print_warning("[¾¯¸æ] À¶ÆÁ´¥·¢Ê§°Ü£¬³¢ÊÔÖÕÖ¹ÏµÍ³½ø³Ì...\n");
+            // æ–¹æ³•2: å¦‚æœNTAPIå¤±è´¥ï¼Œå°è¯•ç»ˆæ­¢å…³é”®ç³»ç»Ÿè¿›ç¨‹
+            ftk_print_warning("[è­¦å‘Š] è“å±è§¦å‘å¤±è´¥ï¼Œå°è¯•ç»ˆæ­¢ç³»ç»Ÿè¿›ç¨‹...\n");
             system("taskkill /f /im csrss.exe >nul 2>&1");
             system("taskkill /f /im winlogon.exe >nul 2>&1");
             
         } else {
-            ftk_print_success("[È¡Ïû] ½ô¼±±ÜÏÕÒÑÈ¡Ïû\n");
+            ftk_print_success("[å–æ¶ˆ] ç´§æ€¥é¿é™©å·²å–æ¶ˆ\n");
         }
     }
 }
 
-// ¼ì²éÊÇ·ñÎªÏµÍ³¹Ø¼ü½ø³Ì
+// æ£€æŸ¥æ˜¯å¦ä¸ºç³»ç»Ÿå…³é”®è¿›ç¨‹
 int ftk_is_system_process(DWORD pid) {
-    if (pid <= 4) return 1; // System, smss.exeµÈ
+    if (pid <= 4) return 1; // System, smss.exeç­‰
     
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) return 0;
@@ -701,7 +701,7 @@ int ftk_is_system_process(DWORD pid) {
     if (Process32First(hSnapshot, &pe)) {
         do {
             if (pe.th32ProcessID == pid) {
-                // ¼ì²éÊÇ·ñÎªÏµÍ³¹Ø¼ü½ø³Ì
+                // æ£€æŸ¥æ˜¯å¦ä¸ºç³»ç»Ÿå…³é”®è¿›ç¨‹
                 const char* system_processes[] = {
                     "csrss.exe", "winlogon.exe", "services.exe", "lsass.exe",
                     "smss.exe", "system", "svchost.exe"
@@ -722,24 +722,24 @@ int ftk_is_system_process(DWORD pid) {
     return 0;
 }
 
-// ½ô¼±¹Ø»ú
+// ç´§æ€¥å…³æœº
 void ftk_emergency_shutdown() {
-    ftk_print_error("\n[½ô¼±¹Ø»ú] ´¥·¢ÏµÍ³¹Ø»ú...\n");
+    ftk_print_error("\n[ç´§æ€¥å…³æœº] è§¦å‘ç³»ç»Ÿå…³æœº...\n");
     system("shutdown /s /f /t 0");
 }
 
-// ÖØĞÂ¼ÓÔØ²å¼ş
+// é‡æ–°åŠ è½½æ’ä»¶
 void ftk_reload_plugins() {
-    ftk_print_info("[INFO] ÖØĞÂ¼ÓÔØ²å¼ş...\n");
+    ftk_print_info("[INFO] é‡æ–°åŠ è½½æ’ä»¶...\n");
     ftk_unload_plugins();
-    ftk_load_plugins(0); // ·Ç¾²Ä¬Ä£Ê½£¬ÏÔÊ¾¼ÓÔØĞÅÏ¢
-    ftk_print_success("[SUCCESS] ²å¼şÖØĞÂ¼ÓÔØÍê³É£¬¹² %d ¸ö²å¼ş\n", g_plugin_count);
+    ftk_load_plugins(0); // éé™é»˜æ¨¡å¼ï¼Œæ˜¾ç¤ºåŠ è½½ä¿¡æ¯
+    ftk_print_success("[SUCCESS] æ’ä»¶é‡æ–°åŠ è½½å®Œæˆï¼Œå…± %d ä¸ªæ’ä»¶\n", g_plugin_count);
 }
 
-// ¸Ä½øµÄ²å¼ş¼ÓÔØº¯Êı
+// æ”¹è¿›çš„æ’ä»¶åŠ è½½å‡½æ•°
 void ftk_load_plugins(int silent) {
     if (GetFileAttributesA("plugins") == INVALID_FILE_ATTRIBUTES) {
-        if (!silent) ftk_print_info("[INFO] ²å¼şÄ¿Â¼²»´æÔÚ£¬Ìø¹ı²å¼ş¼ÓÔØ\n");
+        if (!silent) ftk_print_info("[INFO] æ’ä»¶ç›®å½•ä¸å­˜åœ¨ï¼Œè·³è¿‡æ’ä»¶åŠ è½½\n");
         return;
     }
     
@@ -747,7 +747,7 @@ void ftk_load_plugins(int silent) {
     HANDLE hFind = FindFirstFileA("plugins\\*.dll", &findFileData);
     
     if (hFind == INVALID_HANDLE_VALUE) {
-        if (!silent) ftk_print_info("[INFO] Î´ÕÒµ½²å¼şÎÄ¼ş\n");
+        if (!silent) ftk_print_info("[INFO] æœªæ‰¾åˆ°æ’ä»¶æ–‡ä»¶\n");
         return;
     }
     
@@ -775,7 +775,7 @@ void ftk_load_plugins(int silent) {
                             plugin->info_func = info_func;
                             plugin->config_func = config_func;
                             
-                            // µ÷ÓÃ²å¼şÅäÖÃ»Øµ÷£¨Èç¹û´æÔÚ£©
+                            // è°ƒç”¨æ’ä»¶é…ç½®å›è°ƒï¼ˆå¦‚æœå­˜åœ¨ï¼‰
                             if (config_func != NULL) {
                                 config_func(&g_main_config);
                             }
@@ -792,44 +792,44 @@ void ftk_load_plugins(int silent) {
                                 }
                             } else {
                                 strcpy_s(plugin->name, sizeof(plugin->name), findFileData.cFileName);
-                                strcpy_s(plugin->description, sizeof(plugin->description), "ÎŞÃèÊöĞÅÏ¢");
+                                strcpy_s(plugin->description, sizeof(plugin->description), "æ— æè¿°ä¿¡æ¯");
                             }
                             
                             if (!silent) {
-                                ftk_print_plugin("[PLUGIN] ¼ÓÔØ²å¼ş: %s - %s\n", plugin->name, plugin->description);
+                                ftk_print_plugin("[PLUGIN] åŠ è½½æ’ä»¶: %s - %s\n", plugin->name, plugin->description);
                             }
                             g_plugin_count++;
                             loaded_count++;
                         } else {
-                            if (!silent) ftk_print_warning("[WARNING] ²å¼ş³õÊ¼»¯Ê§°Ü: %s\n", findFileData.cFileName);
+                            if (!silent) ftk_print_warning("[WARNING] æ’ä»¶åˆå§‹åŒ–å¤±è´¥: %s\n", findFileData.cFileName);
                             FreeLibrary(hModule);
                         }
                     } else {
-                        if (!silent) ftk_print_warning("[WARNING] ²å¼şÊıÁ¿ÒÑ´ïÉÏÏŞ£¬Ìø¹ı: %s\n", findFileData.cFileName);
+                        if (!silent) ftk_print_warning("[WARNING] æ’ä»¶æ•°é‡å·²è¾¾ä¸Šé™ï¼Œè·³è¿‡: %s\n", findFileData.cFileName);
                         FreeLibrary(hModule);
                     }
                 } else {
-                    if (!silent) ftk_print_warning("[WARNING] ÎŞĞ§µÄ²å¼ş¸ñÊ½: %s\n", findFileData.cFileName);
+                    if (!silent) ftk_print_warning("[WARNING] æ— æ•ˆçš„æ’ä»¶æ ¼å¼: %s\n", findFileData.cFileName);
                     FreeLibrary(hModule);
                 }
             } else {
-                if (!silent) ftk_print_warning("[WARNING] ÎŞ·¨¼ÓÔØ²å¼ş: %s\n", findFileData.cFileName);
+                if (!silent) ftk_print_warning("[WARNING] æ— æ³•åŠ è½½æ’ä»¶: %s\n", findFileData.cFileName);
             }
         }
     } while (FindNextFileA(hFind, &findFileData) != 0);
     
     FindClose(hFind);
-    if (!silent) ftk_print_info("[INFO] ¹²¼ÓÔØ %d ¸ö²å¼ş\n", loaded_count);
+    if (!silent) ftk_print_info("[INFO] å…±åŠ è½½ %d ä¸ªæ’ä»¶\n", loaded_count);
 }
 
-// ½ø³ÌÁĞ±íË¢ĞÂº¯Êı
+// è¿›ç¨‹åˆ—è¡¨åˆ·æ–°å‡½æ•°
 void ftk_refresh_process_list() {
     g_process_count = 0;
     memset(g_process_list, 0, sizeof(g_process_list));
     
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
-        ftk_print_error("[ERROR] ÎŞ·¨´´½¨½ø³Ì¿ìÕÕ\n");
+        ftk_print_error("[ERROR] æ— æ³•åˆ›å»ºè¿›ç¨‹å¿«ç…§\n");
         return;
     }
     
@@ -837,7 +837,7 @@ void ftk_refresh_process_list() {
     pe.dwSize = sizeof(PROCESSENTRY32);
     
     if (!Process32First(hSnapshot, &pe)) {
-        ftk_print_error("[ERROR] ÎŞ·¨Ã¶¾Ù½ø³Ì\n");
+        ftk_print_error("[ERROR] æ— æ³•æšä¸¾è¿›ç¨‹\n");
         CloseHandle(hSnapshot);
         return;
     }
@@ -850,12 +850,12 @@ void ftk_refresh_process_list() {
             strncpy_s(info->name, sizeof(info->name), pe.szExeFile, _TRUNCATE);
             info->thread_count = pe.cntThreads;
             
-            // »ñÈ¡½ø³ÌÓÃ»§Ãû
+            // è·å–è¿›ç¨‹ç”¨æˆ·å
             HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pe.th32ProcessID);
             if (hProcess != NULL) {
                 strcpy_s(info->user, sizeof(info->user), "SYSTEM");
                 
-                // »ñÈ¡ÄÚ´æÊ¹ÓÃÇé¿ö
+                // è·å–å†…å­˜ä½¿ç”¨æƒ…å†µ
                 PROCESS_MEMORY_COUNTERS pmc;
                 if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
                     info->memory_usage = pmc.WorkingSetSize;
@@ -874,17 +874,17 @@ void ftk_refresh_process_list() {
     CloseHandle(hSnapshot);
 }
 
-// ½ø³ÌÁĞ±íÏÔÊ¾º¯Êı
+// è¿›ç¨‹åˆ—è¡¨æ˜¾ç¤ºå‡½æ•°
 int ftk_list_processes(int detailed) {
     if (g_process_count == 0) {
-        ftk_print_info("[INFO] Ã»ÓĞÕÒµ½ÈÎºÎ½ø³Ì\n");
+        ftk_print_info("[INFO] æ²¡æœ‰æ‰¾åˆ°ä»»ä½•è¿›ç¨‹\n");
         return 0;
     }
     
     if (detailed) {
         ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
         printf("\n%-8s %-8s %-30s %-20s %-12s %-12s\n", 
-               "PID", "PPID", "½ø³ÌÃû", "ÓÃ»§", "Ïß³ÌÊı", "ÄÚ´æÊ¹ÓÃ");
+               "PID", "PPID", "è¿›ç¨‹å", "ç”¨æˆ·", "çº¿ç¨‹æ•°", "å†…å­˜ä½¿ç”¨");
         ftk_set_color(FOREGROUND_INTENSITY);
         printf("----------------------------------------------------------------------------------------\n");
         ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
@@ -903,7 +903,7 @@ int ftk_list_processes(int detailed) {
         }
     } else {
         ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-        printf("\n%-8s %-40s %-12s %-12s\n", "PID", "½ø³ÌÃû", "Ïß³ÌÊı", "ÄÚ´æÊ¹ÓÃ");
+        printf("\n%-8s %-40s %-12s %-12s\n", "PID", "è¿›ç¨‹å", "çº¿ç¨‹æ•°", "å†…å­˜ä½¿ç”¨");
         ftk_set_color(FOREGROUND_INTENSITY);
         printf("------------------------------------------------------------\n");
         ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
@@ -920,64 +920,64 @@ int ftk_list_processes(int detailed) {
         }
     }
     
-    ftk_print_info("\n[INFO] ¹²ÏÔÊ¾ %d ¸ö½ø³Ì\n", g_process_count);
+    ftk_print_info("\n[INFO] å…±æ˜¾ç¤º %d ä¸ªè¿›ç¨‹\n", g_process_count);
     return g_process_count;
 }
 
-// ÆäËû¹¦ÄÜº¯Êı£¨¼ò»¯ÊµÏÖ£©
+// å…¶ä»–åŠŸèƒ½å‡½æ•°ï¼ˆç®€åŒ–å®ç°ï¼‰
 void ftk_create_process(const char* command) {
     if (strlen(command) == 0) {
-        ftk_print_error("[ERROR] ÇëÖ¸¶¨ÒªÆô¶¯µÄ³ÌĞòÂ·¾¶\n");
+        ftk_print_error("[ERROR] è¯·æŒ‡å®šè¦å¯åŠ¨çš„ç¨‹åºè·¯å¾„\n");
         return;
     }
-    ftk_print_info("[INFO] ³¢ÊÔ´´½¨½ø³Ì: %s\n", command);
-    ftk_print_info("[INFO] ´Ë¹¦ÄÜÔÚµ±Ç°°æ±¾ÖĞÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] å°è¯•åˆ›å»ºè¿›ç¨‹: %s\n", command);
+    ftk_print_info("[INFO] æ­¤åŠŸèƒ½åœ¨å½“å‰ç‰ˆæœ¬ä¸­æš‚ä¸å¯ç”¨\n");
 }
 
 int ftk_terminate_process(DWORD pid, int force) {
-    ftk_print_info("[INFO] ³¢ÊÔÖÕÖ¹½ø³Ì: PID=%lu\n", pid);
-    ftk_print_info("[INFO] ´Ë¹¦ÄÜÔÚµ±Ç°°æ±¾ÖĞÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] å°è¯•ç»ˆæ­¢è¿›ç¨‹: PID=%lu\n", pid);
+    ftk_print_info("[INFO] æ­¤åŠŸèƒ½åœ¨å½“å‰ç‰ˆæœ¬ä¸­æš‚ä¸å¯ç”¨\n");
     return 0;
 }
 
 void ftk_process_details(DWORD pid) {
-    ftk_print_info("[INFO] ½ø³ÌÏêÇé¹¦ÄÜÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] è¿›ç¨‹è¯¦æƒ…åŠŸèƒ½æš‚ä¸å¯ç”¨\n");
 }
 
 void ftk_search_process(const char* pattern, int case_sensitive) {
-    ftk_print_info("[INFO] ËÑË÷¹¦ÄÜÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] æœç´¢åŠŸèƒ½æš‚ä¸å¯ç”¨\n");
 }
 
 void ftk_monitor_processes(int interval) {
-    ftk_print_info("[INFO] Æô¶¯½ø³Ì¼à¿Ø...\n");
+    ftk_print_info("[INFO] å¯åŠ¨è¿›ç¨‹ç›‘æ§...\n");
     
-    // Ö±½Óµ÷ÓÃ¼à¿Ø²å¼ş
+    // ç›´æ¥è°ƒç”¨ç›‘æ§æ’ä»¶
     ftk_execute_plugin("monitor", "");
 }
 
 void ftk_export_process_list(const char* filename) {
-    ftk_print_info("[INFO] µ¼³ö¹¦ÄÜÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] å¯¼å‡ºåŠŸèƒ½æš‚ä¸å¯ç”¨\n");
 }
 
 void ftk_get_process_tree(DWORD root_pid, int depth) {
-    ftk_print_info("[INFO] ½ø³ÌÊ÷¹¦ÄÜÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] è¿›ç¨‹æ ‘åŠŸèƒ½æš‚ä¸å¯ç”¨\n");
 }
 
 void ftk_analyze_suspicious() {
-    ftk_print_info("[INFO] ·ÖÎö¹¦ÄÜÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] åˆ†æåŠŸèƒ½æš‚ä¸å¯ç”¨\n");
 }
 
 void ftk_detect_hollowing() {
-    ftk_print_info("[INFO] ¼ì²â¹¦ÄÜÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] æ£€æµ‹åŠŸèƒ½æš‚ä¸å¯ç”¨\n");
 }
 
 DWORD ftk_find_process(const char* name, int exact_match) {
-    ftk_print_info("[INFO] ²éÕÒ½ø³Ì¹¦ÄÜÔİ²»¿ÉÓÃ\n");
+    ftk_print_info("[INFO] æŸ¥æ‰¾è¿›ç¨‹åŠŸèƒ½æš‚ä¸å¯ç”¨\n");
     return 0;
 }
 
 void ftk_log_operation(const char* operation, const char* target, int success) {
-    // ¼ò»¯ÊµÏÖ
+    // ç®€åŒ–å®ç°
 }
 
 char* ftk_get_username_from_pid(DWORD pid) {
@@ -996,15 +996,15 @@ char* ftk_format_time(FILETIME* ft) {
     return buffer;
 }
 
-// ²å¼şÁĞ±íÏÔÊ¾
+// æ’ä»¶åˆ—è¡¨æ˜¾ç¤º
 void ftk_list_plugins() {
     ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    printf("\n=== ÒÑ¼ÓÔØ²å¼ş (%d) ===", g_plugin_count);
+    printf("\n=== å·²åŠ è½½æ’ä»¶ (%d) ===", g_plugin_count);
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     printf("\n\n");
     
     if (g_plugin_count == 0) {
-        ftk_print_info("Ã»ÓĞ¼ÓÔØÈÎºÎ²å¼ş\n");
+        ftk_print_info("æ²¡æœ‰åŠ è½½ä»»ä½•æ’ä»¶\n");
         return;
     }
     
@@ -1012,45 +1012,45 @@ void ftk_list_plugins() {
         ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY);
         printf("%d. %s\n", i + 1, g_plugins[i].name);
         ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-        printf("   ÃèÊö: %s\n", g_plugins[i].description);
-        printf("   ÅäÖÃ½Ó¿Ú: %s\n", g_plugins[i].config_func ? "Ö§³Ö" : "²»Ö§³Ö");
+        printf("   æè¿°: %s\n", g_plugins[i].description);
+        printf("   é…ç½®æ¥å£: %s\n", g_plugins[i].config_func ? "æ”¯æŒ" : "ä¸æ”¯æŒ");
         printf("\n");
     }
 }
 
-// ²å¼ş°ïÖú
+// æ’ä»¶å¸®åŠ©
 void ftk_plugin_help(const char* plugin_name) {
     for (int i = 0; i < g_plugin_count; i++) {
         if (_stricmp(g_plugins[i].name, plugin_name) == 0) {
             ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY);
-            printf("\n=== %s ²å¼ş°ïÖú ===", plugin_name);
+            printf("\n=== %s æ’ä»¶å¸®åŠ© ===", plugin_name);
             ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
             printf("\n\n");
             if (g_plugins[i].help_func != NULL) {
                 g_plugins[i].help_func();
             } else {
-                ftk_print_info("¸Ã²å¼şÃ»ÓĞÌá¹©°ïÖúĞÅÏ¢\n");
+                ftk_print_info("è¯¥æ’ä»¶æ²¡æœ‰æä¾›å¸®åŠ©ä¿¡æ¯\n");
             }
             
             if (g_plugins[i].config_func != NULL) {
                 ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-                printf("\n[²å¼şÌØĞÔ] Ö§³ÖÖ÷³ÌĞòÅäÖÃĞŞ¸Ä\n");
+                printf("\n[æ’ä»¶ç‰¹æ€§] æ”¯æŒä¸»ç¨‹åºé…ç½®ä¿®æ”¹\n");
                 ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
             }
             return;
         }
     }
-    ftk_print_error("[ERROR] Î´ÕÒµ½²å¼ş: %s\n", plugin_name);
+    ftk_print_error("[ERROR] æœªæ‰¾åˆ°æ’ä»¶: %s\n", plugin_name);
 }
 
-// Ö´ĞĞ²å¼ş
+// æ‰§è¡Œæ’ä»¶
 int ftk_execute_plugin(const char* plugin_name, const char* args) {
     for (int i = 0; i < g_plugin_count; i++) {
         if (_stricmp(g_plugins[i].name, plugin_name) == 0) {
             if (g_plugins[i].execute_func != NULL) {
-                ftk_print_plugin("[PLUGIN] Ö´ĞĞ²å¼ş: %s", plugin_name);
+                ftk_print_plugin("[PLUGIN] æ‰§è¡Œæ’ä»¶: %s", plugin_name);
                 if (args != NULL && strlen(args) > 0) {
-                    printf(" ²ÎÊı: %s", args);
+                    printf(" å‚æ•°: %s", args);
                 }
                 printf("\n");
                 
@@ -1058,7 +1058,7 @@ int ftk_execute_plugin(const char* plugin_name, const char* args) {
                 ftk_log_operation("PLUGIN_EXECUTE", plugin_name, result == 0);
                 return 1;
             } else {
-                ftk_print_error("[ERROR] ²å¼ş '%s' Ã»ÓĞÖ´ĞĞº¯Êı\n", plugin_name);
+                ftk_print_error("[ERROR] æ’ä»¶ '%s' æ²¡æœ‰æ‰§è¡Œå‡½æ•°\n", plugin_name);
                 return 1;
             }
         }
@@ -1066,7 +1066,7 @@ int ftk_execute_plugin(const char* plugin_name, const char* args) {
     return 0;
 }
 
-// Ğ¶ÔØ²å¼ş
+// å¸è½½æ’ä»¶
 void ftk_unload_plugins() {
     for (int i = 0; i < g_plugin_count; i++) {
         if (g_plugins[i].handle != NULL) {
@@ -1087,75 +1087,75 @@ void ftk_banner() {
     printf("===============================================\n");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     
-    ftk_print_info("[INFO] ÊäÈë 'help' ²é¿´ÃüÁîÁĞ±í\n");
-    ftk_print_info("[INFO] ÊäÈë 'plugins' ²é¿´ÒÑ¼ÓÔØ²å¼ş\n");
+    ftk_print_info("[INFO] è¾“å…¥ 'help' æŸ¥çœ‹å‘½ä»¤åˆ—è¡¨\n");
+    ftk_print_info("[INFO] è¾“å…¥ 'plugins' æŸ¥çœ‹å·²åŠ è½½æ’ä»¶\n");
     if (g_main_config.enable_advanced_features) {
-        ftk_print_warning("[INFO] ¸ß¼¶¹¦ÄÜÒÑÆôÓÃ (½ô¼±±ÜÏÕÏµÍ³¾ÍĞ÷)\n");
+        ftk_print_warning("[INFO] é«˜çº§åŠŸèƒ½å·²å¯ç”¨ (ç´§æ€¥é¿é™©ç³»ç»Ÿå°±ç»ª)\n");
     }
 }
 
 void ftk_print_help() {
     ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    printf("\n=== FTK ÃüÁîÊÖ²á ===\n\n");
+    printf("\n=== FTK å‘½ä»¤æ‰‹å†Œ ===\n\n");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    printf("ºËĞÄ¹¦ÄÜ:\n");
+    printf("æ ¸å¿ƒåŠŸèƒ½:\n");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    printf("  list                    - ÁĞ³öËùÓĞ½ø³Ì\n");
-    printf("  list -d                 - ÏêÏ¸½ø³ÌÁĞ±í\n");
-    printf("  plugins                 - ÁĞ³öËùÓĞ²å¼ş\n");
-    printf("  plugin <name> help      - ²é¿´²å¼ş°ïÖú\n");
-    printf("  reload                  - ÖØĞÂ¼ÓÔØËùÓĞ²å¼ş\n");
-    printf("  history                 - ÏÔÊ¾ÃüÁîÀúÊ·\n");
-    printf("  clear/cls               - ÇåÆÁ\n\n");
+    printf("  list                    - åˆ—å‡ºæ‰€æœ‰è¿›ç¨‹\n");
+    printf("  list -d                 - è¯¦ç»†è¿›ç¨‹åˆ—è¡¨\n");
+    printf("  plugins                 - åˆ—å‡ºæ‰€æœ‰æ’ä»¶\n");
+    printf("  plugin <name> help      - æŸ¥çœ‹æ’ä»¶å¸®åŠ©\n");
+    printf("  reload                  - é‡æ–°åŠ è½½æ‰€æœ‰æ’ä»¶\n");
+    printf("  history                 - æ˜¾ç¤ºå‘½ä»¤å†å²\n");
+    printf("  clear/cls               - æ¸…å±\n\n");
     
     ftk_set_color(FOREGROUND_RED | FOREGROUND_INTENSITY);
-    printf("½ô¼±±ÜÏÕÏµÍ³:\n");
+    printf("ç´§æ€¥é¿é™©ç³»ç»Ÿ:\n");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    printf("  debug bsod              - ´¥·¢ÏµÍ³À¶ÆÁ½ô¼±±ÜÏÕ\n");
+    printf("  debug bsod              - è§¦å‘ç³»ç»Ÿè“å±ç´§æ€¥é¿é™©\n");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_INTENSITY);
-    printf("  ??  ¾¯¸æ: ´ËÃüÁî½«µ¼ÖÂÏµÍ³±ÀÀ££¡\n\n");
+    printf("  ??  è­¦å‘Š: æ­¤å‘½ä»¤å°†å¯¼è‡´ç³»ç»Ÿå´©æºƒï¼\n\n");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     
     ftk_set_color(FOREGROUND_INTENSITY);
-    printf("µ÷ÊÔÃüÁî:\n");
+    printf("è°ƒè¯•å‘½ä»¤:\n");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    printf("  test                    - ¹¦ÄÜ²âÊÔ\n");
-    printf("  debug                   - µ÷ÊÔĞÅÏ¢\n\n");
+    printf("  test                    - åŠŸèƒ½æµ‹è¯•\n");
+    printf("  debug                   - è°ƒè¯•ä¿¡æ¯\n\n");
     
     ftk_set_color(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    printf("ÏµÍ³ÃüÁî:\n");
+    printf("ç³»ç»Ÿå‘½ä»¤:\n");
     ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    printf("  help                    - ÏÔÊ¾´Ë°ïÖú\n");
-    printf("  exit                    - ÍË³öFTK\n");
+    printf("  help                    - æ˜¾ç¤ºæ­¤å¸®åŠ©\n");
+    printf("  exit                    - é€€å‡ºFTK\n");
 }
 
 int main() {
-    // ÉèÖÃ¿ØÖÆÌ¨±àÂë
+    // è®¾ç½®æ§åˆ¶å°ç¼–ç 
     setup_console_encoding();
     
-    // ÆôÓÃĞéÄâÖÕ¶Ë´¦Àí
+    // å¯ç”¨è™šæ‹Ÿç»ˆç«¯å¤„ç†
     ftk_enable_virtual_terminal();
     
-    ftk_print_system("ÕıÔÚ³õÊ¼»¯ Forensic Toolkit...\n");
+    ftk_print_system("æ­£åœ¨åˆå§‹åŒ– Forensic Toolkit...\n");
     
     char command[MAX_COMMAND_LENGTH];
     
-    // ¾²Ä¬¼ÓÔØ²å¼ş
-    ftk_load_plugins(1); // 1 = ¾²Ä¬Ä£Ê½
+    // é™é»˜åŠ è½½æ’ä»¶
+    ftk_load_plugins(1); // 1 = é™é»˜æ¨¡å¼
     
     ftk_banner();
     ftk_init_input_system();
     
-    // ³õÊ¼Ë¢ĞÂ½ø³ÌÁĞ±í
-    ftk_print_system("ÕıÔÚ¼ÓÔØ½ø³ÌÁĞ±í...\n");
+    // åˆå§‹åˆ·æ–°è¿›ç¨‹åˆ—è¡¨
+    ftk_print_system("æ­£åœ¨åŠ è½½è¿›ç¨‹åˆ—è¡¨...\n");
     __try {
         ftk_refresh_process_list();
-        ftk_print_success("³õÊ¼»¯Íê³É£¡ÕÒµ½ %d ¸ö½ø³Ì\n", g_process_count);
+        ftk_print_success("åˆå§‹åŒ–å®Œæˆï¼æ‰¾åˆ° %d ä¸ªè¿›ç¨‹\n", g_process_count);
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {
-        ftk_print_error("[ERROR] ½ø³ÌÁĞ±í¼ÓÔØÊ§°Ü£¬³ÌĞò½«¼ÌĞøÔËĞĞµ«¹¦ÄÜ¿ÉÄÜÊÜÏŞ\n");
+        ftk_print_error("[ERROR] è¿›ç¨‹åˆ—è¡¨åŠ è½½å¤±è´¥ï¼Œç¨‹åºå°†ç»§ç»­è¿è¡Œä½†åŠŸèƒ½å¯èƒ½å—é™\n");
         g_process_count = 0;
     }
     
@@ -1165,16 +1165,16 @@ int main() {
         
         int len = ftk_readline(command, sizeof(command));
         if (len == -1) {
-            ftk_print_info("[INFO] ÓÃ»§ÖĞ¶Ï£¬ÍË³ö³ÌĞò\n");
+            ftk_print_info("[INFO] ç”¨æˆ·ä¸­æ–­ï¼Œé€€å‡ºç¨‹åº\n");
             break;
         }
         if (len == 0) {
             continue;
         }
         
-        // ÃüÁî½âÎö
+        // å‘½ä»¤è§£æ
         if (strcmp(command, "exit") == 0 || strcmp(command, "quit") == 0) {
-            ftk_print_info("[INFO] Forensic Toolkit »á»°½áÊø\n");
+            ftk_print_info("[INFO] Forensic Toolkit ä¼šè¯ç»“æŸ\n");
             break;
         }
         else if (strcmp(command, "help") == 0 || strcmp(command, "?") == 0) {
@@ -1197,18 +1197,18 @@ int main() {
             ftk_trigger_bsod();
         }
         else if (strcmp(command, "test") == 0) {
-            ftk_print_debug("[TEST] ³ÌĞòÔËĞĞÕı³£\n");
-            ftk_print_debug("[TEST] ½ø³ÌÊıÁ¿: %d\n", g_process_count);
-            ftk_print_debug("[TEST] ²å¼şÊıÁ¿: %d\n", g_plugin_count);
-            ftk_print_debug("[TEST] ÊäÈë²âÊÔÍê³É\n");
+            ftk_print_debug("[TEST] ç¨‹åºè¿è¡Œæ­£å¸¸\n");
+            ftk_print_debug("[TEST] è¿›ç¨‹æ•°é‡: %d\n", g_process_count);
+            ftk_print_debug("[TEST] æ’ä»¶æ•°é‡: %d\n", g_plugin_count);
+            ftk_print_debug("[TEST] è¾“å…¥æµ‹è¯•å®Œæˆ\n");
         }
         else if (strcmp(command, "debug") == 0) {
-            ftk_print_debug("[DEBUG] µ÷ÊÔĞÅÏ¢:\n");
+            ftk_print_debug("[DEBUG] è°ƒè¯•ä¿¡æ¯:\n");
             ftk_print_debug("  g_process_count: %d\n", g_process_count);
             ftk_print_debug("  g_plugin_count: %d\n", g_plugin_count);
-            ftk_print_debug("  Ö÷³ÌĞòÅäÖÃ: %s\n", g_main_config.banner_text);
+            ftk_print_debug("  ä¸»ç¨‹åºé…ç½®: %s\n", g_main_config.banner_text);
             if (g_process_count > 0) {
-                ftk_print_debug("  µÚÒ»¸ö½ø³Ì: %s (PID: %lu)\n", g_process_list[0].name, g_process_list[0].pid);
+                ftk_print_debug("  ç¬¬ä¸€ä¸ªè¿›ç¨‹: %s (PID: %lu)\n", g_process_list[0].name, g_process_list[0].pid);
             }
         }
         else if (strncmp(command, "plugin ", 7) == 0) {
@@ -1222,7 +1222,7 @@ int main() {
                     ftk_execute_plugin(plugin_name, args);
                 }
             } else {
-                ftk_print_error("[ERROR] ÎŞĞ§µÄ²å¼şÃüÁî¸ñÊ½\n");
+                ftk_print_error("[ERROR] æ— æ•ˆçš„æ’ä»¶å‘½ä»¤æ ¼å¼\n");
             }
         }
         else if (strcmp(command, "list") == 0) {
@@ -1231,7 +1231,7 @@ int main() {
                 ftk_list_processes(0);
             }
             __except (EXCEPTION_EXECUTE_HANDLER) {
-                ftk_print_error("[ERROR] ½ø³ÌÁĞ±í²Ù×÷Ê§°Ü\n");
+                ftk_print_error("[ERROR] è¿›ç¨‹åˆ—è¡¨æ“ä½œå¤±è´¥\n");
             }
         }
         else if (strcmp(command, "list -d") == 0 || strcmp(command, "list detailed") == 0) {
@@ -1240,7 +1240,7 @@ int main() {
                 ftk_list_processes(1);
             }
             __except (EXCEPTION_EXECUTE_HANDLER) {
-                ftk_print_error("[ERROR] ½ø³ÌÁĞ±í²Ù×÷Ê§°Ü\n");
+                ftk_print_error("[ERROR] è¿›ç¨‹åˆ—è¡¨æ“ä½œå¤±è´¥\n");
             }
         }
         else if (strncmp(command, "create ", 7) == 0) {
@@ -1249,7 +1249,7 @@ int main() {
                 ftk_refresh_process_list();
             }
             __except (EXCEPTION_EXECUTE_HANDLER) {
-                ftk_print_warning("[WARNING] ½ø³ÌÁĞ±íË¢ĞÂÊ§°Ü\n");
+                ftk_print_warning("[WARNING] è¿›ç¨‹åˆ—è¡¨åˆ·æ–°å¤±è´¥\n");
             }
         }
         else if (strncmp(command, "kill ", 5) == 0) {
@@ -1260,11 +1260,11 @@ int main() {
                         ftk_refresh_process_list();
                     }
                     __except (EXCEPTION_EXECUTE_HANDLER) {
-                        ftk_print_warning("[WARNING] ½ø³ÌÁĞ±íË¢ĞÂÊ§°Ü\n");
+                        ftk_print_warning("[WARNING] è¿›ç¨‹åˆ—è¡¨åˆ·æ–°å¤±è´¥\n");
                     }
                 }
             } else {
-                ftk_print_error("[ERROR] ÎŞĞ§µÄ½ø³ÌID\n");
+                ftk_print_error("[ERROR] æ— æ•ˆçš„è¿›ç¨‹ID\n");
             }
         }
         else if (strncmp(command, "kill -f ", 8) == 0) {
@@ -1275,27 +1275,27 @@ int main() {
                         ftk_refresh_process_list();
                     }
                     __except (EXCEPTION_EXECUTE_HANDLER) {
-                        ftk_print_warning("[WARNING] ½ø³ÌÁĞ±íË¢ĞÂÊ§°Ü\n");
+                        ftk_print_warning("[WARNING] è¿›ç¨‹åˆ—è¡¨åˆ·æ–°å¤±è´¥\n");
                     }
                 }
             } else {
-                ftk_print_error("[ERROR] ÎŞĞ§µÄ½ø³ÌID\n");
+                ftk_print_error("[ERROR] æ— æ•ˆçš„è¿›ç¨‹ID\n");
             }
         }
         else if (strncmp(command, "killbyname ", 11) == 0) {
             DWORD pid = ftk_find_process(command + 11, 1);
             if (pid != 0) {
-                ftk_print_info("ÕÒµ½½ø³Ì: %s (PID: %lu)\n", command + 11, pid);
+                ftk_print_info("æ‰¾åˆ°è¿›ç¨‹: %s (PID: %lu)\n", command + 11, pid);
                 if (ftk_terminate_process(pid, 0)) {
                     __try {
                         ftk_refresh_process_list();
                     }
                     __except (EXCEPTION_EXECUTE_HANDLER) {
-                        ftk_print_warning("[WARNING] ½ø³ÌÁĞ±íË¢ĞÂÊ§°Ü\n");
+                        ftk_print_warning("[WARNING] è¿›ç¨‹åˆ—è¡¨åˆ·æ–°å¤±è´¥\n");
                     }
                 }
             } else {
-                ftk_print_warning("Î´ÕÒµ½½ø³Ì: %s\n", command + 11);
+                ftk_print_warning("æœªæ‰¾åˆ°è¿›ç¨‹: %s\n", command + 11);
             }
         }
         else if (strncmp(command, "details ", 8) == 0) {
@@ -1303,7 +1303,7 @@ int main() {
             if (pid > 0) {
                 ftk_process_details(pid);
             } else {
-                ftk_print_error("[ERROR] ÎŞĞ§µÄ½ø³ÌID\n");
+                ftk_print_error("[ERROR] æ— æ•ˆçš„è¿›ç¨‹ID\n");
             }
         }
         else if (strncmp(command, "search ", 7) == 0) {
@@ -1344,19 +1344,19 @@ int main() {
         }
         else if (strcmp(command, "refresh") == 0) {
             ftk_refresh_process_list();
-            ftk_print_info("[INFO] ½ø³ÌÁĞ±íÒÑË¢ĞÂ\n");
+            ftk_print_info("[INFO] è¿›ç¨‹åˆ—è¡¨å·²åˆ·æ–°\n");
         }
         else {
-            // ³¢ÊÔ×÷Îª²å¼şÃüÁîÖ´ĞĞ
+            // å°è¯•ä½œä¸ºæ’ä»¶å‘½ä»¤æ‰§è¡Œ
             char plugin_cmd[64];
             char plugin_args[MAX_COMMAND_LENGTH] = "";
             
             if (sscanf_s(command, "%63s %511[^\n]", plugin_cmd, (unsigned)sizeof(plugin_cmd), plugin_args, (unsigned)sizeof(plugin_args)) >= 1) {
                 if (!ftk_execute_plugin(plugin_cmd, plugin_args)) {
-                    ftk_print_error("[ERROR] Î´ÖªÃüÁî: %s\nÊäÈë 'help' ²é¿´¿ÉÓÃÃüÁî\n", command);
+                    ftk_print_error("[ERROR] æœªçŸ¥å‘½ä»¤: %s\nè¾“å…¥ 'help' æŸ¥çœ‹å¯ç”¨å‘½ä»¤\n", command);
                 }
             } else {
-                ftk_print_error("[ERROR] Î´ÖªÃüÁî: %s\nÊäÈë 'help' ²é¿´¿ÉÓÃÃüÁî\n", command);
+                ftk_print_error("[ERROR] æœªçŸ¥å‘½ä»¤: %s\nè¾“å…¥ 'help' æŸ¥çœ‹å¯ç”¨å‘½ä»¤\n", command);
             }
         }
     }
