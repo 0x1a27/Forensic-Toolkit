@@ -13,6 +13,7 @@
 #define MAX_PROCESSES 1024
 #define MAX_PLUGINS 32
 #define LOG_FILE "ftk_audit.log"
+#define MAX_TAB_MATCHES 50
 
 // 编译指示
 #pragma comment(lib, "user32.lib")
@@ -84,6 +85,7 @@ char g_command_history[100][MAX_COMMAND_LENGTH];
 int g_history_count = 0;
 int g_history_index = 0;
 char g_current_input[MAX_COMMAND_LENGTH] = "";
+int g_cursor_pos = 0;
 
 // 函数声明
 void ftk_banner();
@@ -95,6 +97,17 @@ void ftk_list_plugins();
 void ftk_plugin_help(const char* plugin_name);
 int ftk_execute_plugin(const char* plugin_name, const char* args);
 const char* ftk_stristr(const char* str, const char* substr);
+
+// 颜色输出函数
+void ftk_print_error(const char* format, ...);
+void ftk_print_success(const char* format, ...);
+void ftk_print_warning(const char* format, ...);
+void ftk_print_info(const char* format, ...);
+void ftk_print_debug(const char* format, ...);
+void ftk_print_plugin(const char* format, ...);
+void ftk_print_system(const char* format, ...);
+void ftk_enable_virtual_terminal();
+void ftk_set_color(int color);
 
 // 核心功能函数
 void ftk_refresh_process_list();
@@ -126,6 +139,13 @@ void ftk_show_command_history();
 void ftk_clear_line(int length);
 void ftk_print_prompt();
 int ftk_readline(char* buffer, int max_len);
+void ftk_display_matches(char matches[][MAX_COMMAND_LENGTH], int match_count);
+char* ftk_find_common_prefix(char matches[][MAX_COMMAND_LENGTH], int match_count);
+void ftk_update_display(char* buffer, int pos, int max_len);
+void ftk_handle_arrow_keys(int ext_ch, char* buffer, int* pos, int max_len);
+void ftk_handle_backspace(char* buffer, int* pos);
+void ftk_handle_delete(char* buffer, int* pos);
+void ftk_handle_home_end(int ext_ch, char* buffer, int* pos);
 
 // 命令列表
 const char* g_commands[] = {
@@ -140,6 +160,95 @@ const int g_command_count = sizeof(g_commands) / sizeof(g_commands[0]);
 // BSOD相关函数声明 (需要ntdll.lib)
 typedef NTSTATUS (NTAPI* pdef_RtlAdjustPrivilege)(ULONG Privilege, BOOLEAN Enable, BOOLEAN CurrentThread, PBOOLEAN Enabled);
 typedef NTSTATUS (NTAPI* pdef_NtRaiseHardError)(NTSTATUS ErrorStatus, ULONG NumberOfParameters, ULONG UnicodeStringParameterMask, PULONG_PTR Parameters, ULONG ResponseOption, PULONG Response);
+
+// 启用虚拟终端处理
+void ftk_enable_virtual_terminal() {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) return;
+    
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode)) return;
+    
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hOut, dwMode);
+}
+
+// 设置颜色函数
+void ftk_set_color(int color) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, color);
+}
+
+// 颜色输出函数实现 - 使用Windows控制台API
+void ftk_print_error(const char* format, ...) {
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_INTENSITY);
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    fflush(stdout);
+}
+
+void ftk_print_success(const char* format, ...) {
+    ftk_set_color(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    fflush(stdout);
+}
+
+void ftk_print_warning(const char* format, ...) {
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    fflush(stdout);
+}
+
+void ftk_print_info(const char* format, ...) {
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY); // 青色
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    fflush(stdout);
+}
+
+void ftk_print_debug(const char* format, ...) {
+    ftk_set_color(FOREGROUND_INTENSITY); // 灰色
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    fflush(stdout);
+}
+
+void ftk_print_plugin(const char* format, ...) {
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY); // 紫色
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    fflush(stdout);
+}
+
+void ftk_print_system(const char* format, ...) {
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    fflush(stdout);
+}
 
 // 自定义不区分大小写的字符串搜索函数
 const char* ftk_stristr(const char* str, const char* substr) {
@@ -174,6 +283,7 @@ void setup_console_encoding() {
 void ftk_init_input_system() {
     g_history_count = 0;
     g_history_index = 0;
+    g_cursor_pos = 0;
     memset(g_command_history, 0, sizeof(g_command_history));
     memset(g_current_input, 0, sizeof(g_current_input));
 }
@@ -181,7 +291,7 @@ void ftk_init_input_system() {
 // 清除当前行
 void ftk_clear_line(int length) {
     printf("\r");
-    for (int i = 0; i < length + 20; i++) {
+    for (int i = 0; i < length + 50; i++) {
         printf(" ");
     }
     printf("\r");
@@ -189,66 +299,120 @@ void ftk_clear_line(int length) {
 
 // 打印提示符
 void ftk_print_prompt() {
-    printf("Forensic_Toolkit> ");
+    ftk_set_color(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    printf("\rForensic_Toolkit> ");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 }
 
-// Tab补全函数
+// 显示匹配列表
+void ftk_display_matches(char matches[][MAX_COMMAND_LENGTH], int match_count) {
+    printf("\n");
+    int cols = 3; // 每行显示3个
+    int rows = (match_count + cols - 1) / cols;
+    
+    for (int i = 0; i < rows; i++) {
+        printf("  ");
+        for (int j = 0; j < cols; j++) {
+            int index = i + j * rows;
+            if (index < match_count) {
+                ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+                printf("%-25s", matches[index]);
+                ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            }
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+// 查找共同前缀
+char* ftk_find_common_prefix(char matches[][MAX_COMMAND_LENGTH], int match_count) {
+    static char common_prefix[MAX_COMMAND_LENGTH];
+    if (match_count == 0) return NULL;
+    
+    strcpy_s(common_prefix, MAX_COMMAND_LENGTH, matches[0]);
+    
+    for (int i = 1; i < match_count; i++) {
+        int j = 0;
+        while (common_prefix[j] && matches[i][j] && 
+               tolower(common_prefix[j]) == tolower(matches[i][j])) {
+            j++;
+        }
+        common_prefix[j] = '\0';
+        if (j == 0) break; // 没有共同前缀
+    }
+    
+    return common_prefix;
+}
+
+// Tab补全函数 - 优化版本
 char* ftk_tab_complete(const char* current_input, int* match_count, char matches[][MAX_COMMAND_LENGTH]) {
     *match_count = 0;
     
+    // 如果输入为空，显示所有可用命令
     if (strlen(current_input) == 0) {
-        printf("\n可用命令:\n");
-        for (int i = 0; i < g_command_count; i++) {
-            if (i % 4 == 0) printf("\n  ");
-            printf("%-20s", g_commands[i]);
+        ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        printf("\n可用命令 (%d个):", g_command_count + g_plugin_count);
+        ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        printf("\n");
+        
+        // 显示内置命令
+        ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        printf("内置命令:");
+        ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        printf("\n");
+        ftk_display_matches((char(*)[MAX_COMMAND_LENGTH])g_commands, g_command_count);
+        
+        // 显示插件命令
+        if (g_plugin_count > 0) {
+            ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY);
+            printf("插件命令:");
+            ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            printf("\n");
+            for (int i = 0; i < g_plugin_count; i++) {
+                strcpy_s(matches[*match_count], MAX_COMMAND_LENGTH, g_plugins[i].name);
+                (*match_count)++;
+            }
+            ftk_display_matches(matches, g_plugin_count);
         }
-        printf("\n\n");
         return NULL;
     }
     
+    // 搜索内置命令
     for (int i = 0; i < g_command_count; i++) {
         if (strncmp(g_commands[i], current_input, strlen(current_input)) == 0) {
             strcpy_s(matches[*match_count], MAX_COMMAND_LENGTH, g_commands[i]);
             (*match_count)++;
-            if (*match_count >= 50) break;
+            if (*match_count >= MAX_TAB_MATCHES) break;
         }
     }
     
+    // 搜索插件命令
     for (int i = 0; i < g_plugin_count; i++) {
         if (strncmp(g_plugins[i].name, current_input, strlen(current_input)) == 0) {
             strcpy_s(matches[*match_count], MAX_COMMAND_LENGTH, g_plugins[i].name);
             (*match_count)++;
-            if (*match_count >= 50) break;
+            if (*match_count >= MAX_TAB_MATCHES) break;
         }
     }
     
     if (*match_count == 0) {
-        printf("\a");
+        printf("\a"); // 蜂鸣声提示无匹配
         return NULL;
     }
     else if (*match_count == 1) {
+        // 只有一个匹配，直接补全
         return matches[0];
     }
     else {
+        // 多个匹配，显示列表并返回共同前缀
+        ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        printf("\n找到 %d 个匹配:", *match_count);
+        ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         printf("\n");
-        for (int i = 0; i < *match_count; i++) {
-            if (i % 3 == 0) printf("\n  ");
-            printf("%-25s", matches[i]);
-        }
-        printf("\n\n");
+        ftk_display_matches(matches, *match_count);
         
-        static char common_prefix[MAX_COMMAND_LENGTH];
-        strcpy_s(common_prefix, MAX_COMMAND_LENGTH, matches[0]);
-        
-        for (int i = 1; i < *match_count; i++) {
-            int j = 0;
-            while (common_prefix[j] && matches[i][j] && 
-                   tolower(common_prefix[j]) == tolower(matches[i][j])) {
-                j++;
-            }
-            common_prefix[j] = '\0';
-        }
-        
+        char* common_prefix = ftk_find_common_prefix(matches, *match_count);
         if (strlen(common_prefix) > strlen(current_input)) {
             return common_prefix;
         }
@@ -257,10 +421,107 @@ char* ftk_tab_complete(const char* current_input, int* match_count, char matches
     return NULL;
 }
 
+// 更新显示
+void ftk_update_display(char* buffer, int pos, int max_len) {
+    ftk_clear_line((int)strlen(buffer));
+    ftk_print_prompt();
+    printf("%s", buffer);
+    
+    // 重新定位光标
+    int current_len = (int)strlen(buffer);
+    if (pos < current_len) {
+        for (int i = current_len; i > pos; i--) {
+            printf("\b");
+        }
+    }
+    fflush(stdout);
+}
+
+// 处理方向键
+void ftk_handle_arrow_keys(int ext_ch, char* buffer, int* pos, int max_len) {
+    if (ext_ch == 72) { // 上箭头
+        if (g_history_count > 0) {
+            if (g_history_index > 0) {
+                g_history_index--;
+            }
+            strcpy_s(buffer, max_len, g_command_history[g_history_index]);
+            *pos = (int)strlen(buffer);
+            strcpy_s(g_current_input, MAX_COMMAND_LENGTH, buffer);
+            ftk_update_display(buffer, *pos, max_len);
+        }
+    }
+    else if (ext_ch == 80) { // 下箭头
+        if (g_history_count > 0) {
+            if (g_history_index < g_history_count - 1) {
+                g_history_index++;
+                strcpy_s(buffer, max_len, g_command_history[g_history_index]);
+                *pos = (int)strlen(buffer);
+                strcpy_s(g_current_input, MAX_COMMAND_LENGTH, buffer);
+            } else if (g_history_index == g_history_count - 1) {
+                g_history_index++;
+                buffer[0] = '\0';
+                *pos = 0;
+                strcpy_s(g_current_input, MAX_COMMAND_LENGTH, "");
+            }
+            ftk_update_display(buffer, *pos, max_len);
+        }
+    }
+    else if (ext_ch == 75) { // 左箭头
+        if (*pos > 0) {
+            (*pos)--;
+            printf("\b");
+        }
+    }
+    else if (ext_ch == 77) { // 右箭头
+        if (*pos < (int)strlen(buffer)) {
+            printf("%c", buffer[*pos]);
+            (*pos)++;
+        }
+    }
+}
+
+// 处理Home/End键
+void ftk_handle_home_end(int ext_ch, char* buffer, int* pos) {
+    if (ext_ch == 71) { // Home
+        while (*pos > 0) {
+            (*pos)--;
+            printf("\b");
+        }
+    }
+    else if (ext_ch == 79) { // End
+        while (*pos < (int)strlen(buffer)) {
+            printf("%c", buffer[*pos]);
+            (*pos)++;
+        }
+    }
+}
+
+// 处理退格键
+void ftk_handle_backspace(char* buffer, int* pos) {
+    if (*pos > 0) {
+        (*pos)--;
+        for (int i = *pos; i < (int)strlen(buffer); i++) {
+            buffer[i] = buffer[i + 1];
+        }
+        ftk_update_display(buffer, *pos, MAX_COMMAND_LENGTH);
+    }
+}
+
+// 处理Delete键
+void ftk_handle_delete(char* buffer, int* pos) {
+    if (*pos < (int)strlen(buffer)) {
+        for (int i = *pos; i < (int)strlen(buffer); i++) {
+            buffer[i] = buffer[i + 1];
+        }
+        ftk_update_display(buffer, *pos, MAX_COMMAND_LENGTH);
+    }
+}
+
 // 添加到历史记录
 void ftk_add_to_history(const char* command) {
     if (strlen(command) == 0) return;
     
+    // 避免重复添加相同的命令
     if (g_history_count > 0 && strcmp(g_command_history[g_history_count - 1], command) == 0) {
         return;
     }
@@ -269,6 +530,7 @@ void ftk_add_to_history(const char* command) {
         strcpy_s(g_command_history[g_history_count], MAX_COMMAND_LENGTH, command);
         g_history_count++;
     } else {
+        // 历史记录已满，移除最旧的记录
         for (int i = 0; i < 99; i++) {
             strcpy_s(g_command_history[i], MAX_COMMAND_LENGTH, g_command_history[i + 1]);
         }
@@ -279,20 +541,26 @@ void ftk_add_to_history(const char* command) {
 
 // 显示命令历史
 void ftk_show_command_history() {
-    printf("\n=== 命令历史 (%d条) ===\n\n", g_history_count);
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    printf("\n=== 命令历史 (%d条) ===", g_history_count);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    printf("\n\n");
     for (int i = 0; i < g_history_count; i++) {
-        printf("%3d. %s\n", i + 1, g_command_history[i]);
+        ftk_set_color(FOREGROUND_INTENSITY);
+        printf("%3d. ", i + 1);
+        ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        printf("%s\n", g_command_history[i]);
     }
 }
 
-// 输入函数
+// 输入函数 - 优化版本
 int ftk_readline(char* buffer, int max_len) {
     int pos = 0;
     int ch;
-    int history_navigation = 0;
     
     memset(buffer, 0, max_len);
     strcpy_s(g_current_input, MAX_COMMAND_LENGTH, "");
+    g_cursor_pos = 0;
     
     while (1) {
         ch = _getch();
@@ -304,139 +572,57 @@ int ftk_readline(char* buffer, int max_len) {
                 ftk_add_to_history(buffer);
             }
             strcpy_s(g_current_input, MAX_COMMAND_LENGTH, "");
+            g_cursor_pos = 0;
             return pos;
         }
         else if (ch == '\t') {
             buffer[pos] = '\0';
-            char matches[50][MAX_COMMAND_LENGTH];
+            char matches[MAX_TAB_MATCHES][MAX_COMMAND_LENGTH];
             int match_count = 0;
             char* completed = ftk_tab_complete(buffer, &match_count, matches);
             
             if (completed != NULL) {
-                ftk_clear_line(pos);
-                ftk_print_prompt();
-                printf("%s", completed);
-                
                 strcpy_s(buffer, max_len, completed);
                 pos = (int)strlen(completed);
                 strcpy_s(g_current_input, MAX_COMMAND_LENGTH, completed);
+                ftk_update_display(buffer, pos, max_len);
             } else if (match_count > 0) {
-                ftk_print_prompt();
-                printf("%s", buffer);
+                ftk_update_display(buffer, pos, max_len);
             }
         }
         else if (ch == 0x00 || ch == 0xE0) {
             int ext_ch = _getch();
+            ftk_handle_arrow_keys(ext_ch, buffer, &pos, max_len);
+            ftk_handle_home_end(ext_ch, buffer, &pos);
             
-            if (ext_ch == 72) {
-                if (g_history_count > 0) {
-                    if (g_history_index > 0) {
-                        g_history_index--;
-                    }
-                    ftk_clear_line(pos);
-                    ftk_print_prompt();
-                    printf("%s", g_command_history[g_history_index]);
-                    
-                    strcpy_s(buffer, max_len, g_command_history[g_history_index]);
-                    pos = (int)strlen(g_command_history[g_history_index]);
-                    strcpy_s(g_current_input, MAX_COMMAND_LENGTH, g_command_history[g_history_index]);
-                    history_navigation = 1;
-                }
-            }
-            else if (ext_ch == 80) {
-                if (g_history_count > 0) {
-                    if (g_history_index < g_history_count - 1) {
-                        g_history_index++;
-                        ftk_clear_line(pos);
-                        ftk_print_prompt();
-                        printf("%s", g_command_history[g_history_index]);
-                        
-                        strcpy_s(buffer, max_len, g_command_history[g_history_index]);
-                        pos = (int)strlen(g_command_history[g_history_index]);
-                        strcpy_s(g_current_input, MAX_COMMAND_LENGTH, g_command_history[g_history_index]);
-                    } else if (g_history_index == g_history_count - 1) {
-                        g_history_index++;
-                        ftk_clear_line(pos);
-                        ftk_print_prompt();
-                        
-                        buffer[0] = '\0';
-                        pos = 0;
-                        strcpy_s(g_current_input, MAX_COMMAND_LENGTH, "");
-                    }
-                    history_navigation = 1;
-                }
-            }
-            else if (ext_ch == 75) {
-                if (pos > 0) {
-                    pos--;
-                    printf("\b");
-                }
-            }
-            else if (ext_ch == 77) {
-                if (pos < (int)strlen(buffer)) {
-                    pos++;
-                    printf("%c", buffer[pos-1]);
-                }
-            }
-            else if (ext_ch == 83) {
-                if (pos < (int)strlen(buffer)) {
-                    for (int i = pos; i < (int)strlen(buffer); i++) {
-                        buffer[i] = buffer[i + 1];
-                    }
-                    ftk_clear_line(pos);
-                    ftk_print_prompt();
-                    printf("%s", buffer);
-                    for (int i = pos; i < (int)strlen(buffer); i++) {
-                        printf(" ");
-                    }
-                    for (int i = pos; i < (int)strlen(buffer); i++) {
-                        printf("\b");
-                    }
-                }
-            }
-            else if (ext_ch == 71) {
-                while (pos > 0) {
-                    pos--;
-                    printf("\b");
-                }
-            }
-            else if (ext_ch == 79) {
-                while (pos < (int)strlen(buffer)) {
-                    printf("%c", buffer[pos]);
-                    pos++;
-                }
+            if (ext_ch == 83) { // Delete键
+                ftk_handle_delete(buffer, &pos);
             }
         }
         else if (ch == 8 || ch == 127) {
-            if (pos > 0) {
-                pos--;
-                for (int i = pos; i < (int)strlen(buffer); i++) {
-                    buffer[i] = buffer[i + 1];
-                }
-                ftk_clear_line(pos + 1);
-                ftk_print_prompt();
-                printf("%s", buffer);
-                for (int i = pos; i < (int)strlen(buffer); i++) {
-                    printf(" ");
-                }
-                for (int i = pos; i <= (int)strlen(buffer); i++) {
-                    printf("\b");
-                }
-            }
+            ftk_handle_backspace(buffer, &pos);
         }
-        else if (ch == 3) {
+        else if (ch == 3) { // Ctrl+C
             printf("^C\n");
             buffer[0] = '\0';
             strcpy_s(g_current_input, MAX_COMMAND_LENGTH, "");
             return -1;
         }
-        else if (ch == 12) {
+        else if (ch == 12) { // Ctrl+L
             system("cls");
             ftk_banner();
             ftk_print_prompt();
             printf("%s", buffer);
+            // 重新定位光标
+            int current_len = (int)strlen(buffer);
+            if (pos < current_len) {
+                for (int i = current_len; i > pos; i--) {
+                    printf("\b");
+                }
+            }
         }
         else if (pos < max_len - 1 && ch >= 32 && ch <= 126) {
+            // 插入字符
             if (pos < (int)strlen(buffer)) {
                 for (int i = (int)strlen(buffer); i >= pos; i--) {
                     buffer[i + 1] = buffer[i];
@@ -445,44 +631,32 @@ int ftk_readline(char* buffer, int max_len) {
             buffer[pos] = (char)ch;
             pos++;
             
-            if (!history_navigation) {
-                ftk_clear_line((int)strlen(buffer));
-                ftk_print_prompt();
-                printf("%s", buffer);
-                
-                int current_len = (int)strlen(buffer);
-                if (pos < current_len) {
-                    for (int i = current_len; i > pos; i--) {
-                        printf("\b");
-                    }
-                }
-            }
-            
             strcpy_s(g_current_input, MAX_COMMAND_LENGTH, buffer);
-            history_navigation = 0;
+            ftk_update_display(buffer, pos, max_len);
         }
         
+        g_cursor_pos = pos;
         fflush(stdout);
     }
 }
 
 // 触发蓝屏紧急避险
 void ftk_trigger_bsod() {
-    printf("\n[!!! 紧急警告 !!!]\n");
-    printf("您即将触发系统蓝屏紧急避险！\n");
-    printf("这将导致系统立即崩溃并重启！\n");
-    printf("所有未保存的数据将会丢失！\n\n");
+    ftk_print_warning("\n[!!! 紧急警告 !!!]\n");
+    ftk_print_warning("您即将触发系统蓝屏紧急避险！\n");
+    ftk_print_warning("这将导致系统立即崩溃并重启！\n");
+    ftk_print_warning("所有未保存的数据将会丢失！\n\n");
     
     printf("确认执行？(输入 'CONFIRM_BSOD' 继续): ");
     char confirmation[64];
     if (fgets(confirmation, sizeof(confirmation), stdin) != NULL) {
         confirmation[strcspn(confirmation, "\n")] = 0;
         if (strcmp(confirmation, "CONFIRM_BSOD") == 0) {
-            printf("\n[紧急避险] 触发系统蓝屏...\n");
-            printf("系统将在3秒后崩溃...\n");
+            ftk_print_error("\n[紧急避险] 触发系统蓝屏...\n");
+            ftk_print_error("系统将在3秒后崩溃...\n");
             
             for (int i = 3; i > 0; i--) {
-                printf("%d...\n", i);
+                ftk_print_error("%d...\n", i);
                 Sleep(1000);
             }
             
@@ -504,12 +678,12 @@ void ftk_trigger_bsod() {
             }
             
             // 方法2: 如果NTAPI失败，尝试终止关键系统进程
-            printf("[警告] 蓝屏触发失败，尝试终止系统进程...\n");
+            ftk_print_warning("[警告] 蓝屏触发失败，尝试终止系统进程...\n");
             system("taskkill /f /im csrss.exe >nul 2>&1");
             system("taskkill /f /im winlogon.exe >nul 2>&1");
             
         } else {
-            printf("[取消] 紧急避险已取消\n");
+            ftk_print_success("[取消] 紧急避险已取消\n");
         }
     }
 }
@@ -550,22 +724,22 @@ int ftk_is_system_process(DWORD pid) {
 
 // 紧急关机
 void ftk_emergency_shutdown() {
-    printf("\n[紧急关机] 触发系统关机...\n");
+    ftk_print_error("\n[紧急关机] 触发系统关机...\n");
     system("shutdown /s /f /t 0");
 }
 
 // 重新加载插件
 void ftk_reload_plugins() {
-    printf("[INFO] 重新加载插件...\n");
+    ftk_print_info("[INFO] 重新加载插件...\n");
     ftk_unload_plugins();
     ftk_load_plugins(0); // 非静默模式，显示加载信息
-    printf("[SUCCESS] 插件重新加载完成，共 %d 个插件\n", g_plugin_count);
+    ftk_print_success("[SUCCESS] 插件重新加载完成，共 %d 个插件\n", g_plugin_count);
 }
 
 // 改进的插件加载函数
 void ftk_load_plugins(int silent) {
     if (GetFileAttributesA("plugins") == INVALID_FILE_ATTRIBUTES) {
-        if (!silent) printf("[INFO] 插件目录不存在，跳过插件加载\n");
+        if (!silent) ftk_print_info("[INFO] 插件目录不存在，跳过插件加载\n");
         return;
     }
     
@@ -573,7 +747,7 @@ void ftk_load_plugins(int silent) {
     HANDLE hFind = FindFirstFileA("plugins\\*.dll", &findFileData);
     
     if (hFind == INVALID_HANDLE_VALUE) {
-        if (!silent) printf("[INFO] 未找到插件文件\n");
+        if (!silent) ftk_print_info("[INFO] 未找到插件文件\n");
         return;
     }
     
@@ -622,30 +796,30 @@ void ftk_load_plugins(int silent) {
                             }
                             
                             if (!silent) {
-                                printf("[PLUGIN] 加载插件: %s - %s\n", plugin->name, plugin->description);
+                                ftk_print_plugin("[PLUGIN] 加载插件: %s - %s\n", plugin->name, plugin->description);
                             }
                             g_plugin_count++;
                             loaded_count++;
                         } else {
-                            if (!silent) printf("[WARNING] 插件初始化失败: %s\n", findFileData.cFileName);
+                            if (!silent) ftk_print_warning("[WARNING] 插件初始化失败: %s\n", findFileData.cFileName);
                             FreeLibrary(hModule);
                         }
                     } else {
-                        if (!silent) printf("[WARNING] 插件数量已达上限，跳过: %s\n", findFileData.cFileName);
+                        if (!silent) ftk_print_warning("[WARNING] 插件数量已达上限，跳过: %s\n", findFileData.cFileName);
                         FreeLibrary(hModule);
                     }
                 } else {
-                    if (!silent) printf("[WARNING] 无效的插件格式: %s\n", findFileData.cFileName);
+                    if (!silent) ftk_print_warning("[WARNING] 无效的插件格式: %s\n", findFileData.cFileName);
                     FreeLibrary(hModule);
                 }
             } else {
-                if (!silent) printf("[WARNING] 无法加载插件: %s\n", findFileData.cFileName);
+                if (!silent) ftk_print_warning("[WARNING] 无法加载插件: %s\n", findFileData.cFileName);
             }
         }
     } while (FindNextFileA(hFind, &findFileData) != 0);
     
     FindClose(hFind);
-    if (!silent) printf("[INFO] 共加载 %d 个插件\n", loaded_count);
+    if (!silent) ftk_print_info("[INFO] 共加载 %d 个插件\n", loaded_count);
 }
 
 // 进程列表刷新函数
@@ -655,7 +829,7 @@ void ftk_refresh_process_list() {
     
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
-        printf("[ERROR] 无法创建进程快照\n");
+        ftk_print_error("[ERROR] 无法创建进程快照\n");
         return;
     }
     
@@ -663,7 +837,7 @@ void ftk_refresh_process_list() {
     pe.dwSize = sizeof(PROCESSENTRY32);
     
     if (!Process32First(hSnapshot, &pe)) {
-        printf("[ERROR] 无法枚举进程\n");
+        ftk_print_error("[ERROR] 无法枚举进程\n");
         CloseHandle(hSnapshot);
         return;
     }
@@ -703,14 +877,17 @@ void ftk_refresh_process_list() {
 // 进程列表显示函数
 int ftk_list_processes(int detailed) {
     if (g_process_count == 0) {
-        printf("[INFO] 没有找到任何进程\n");
+        ftk_print_info("[INFO] 没有找到任何进程\n");
         return 0;
     }
     
     if (detailed) {
+        ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
         printf("\n%-8s %-8s %-30s %-20s %-12s %-12s\n", 
                "PID", "PPID", "进程名", "用户", "线程数", "内存使用");
+        ftk_set_color(FOREGROUND_INTENSITY);
         printf("----------------------------------------------------------------------------------------\n");
+        ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         
         for (int i = 0; i < g_process_count; i++) {
             ProcessInfo* info = &g_process_list[i];
@@ -725,8 +902,11 @@ int ftk_list_processes(int detailed) {
                    memory_mb);
         }
     } else {
+        ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
         printf("\n%-8s %-40s %-12s %-12s\n", "PID", "进程名", "线程数", "内存使用");
+        ftk_set_color(FOREGROUND_INTENSITY);
         printf("------------------------------------------------------------\n");
+        ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         
         for (int i = 0; i < g_process_count; i++) {
             ProcessInfo* info = &g_process_list[i];
@@ -740,59 +920,59 @@ int ftk_list_processes(int detailed) {
         }
     }
     
-    printf("\n[INFO] 共显示 %d 个进程\n", g_process_count);
+    ftk_print_info("\n[INFO] 共显示 %d 个进程\n", g_process_count);
     return g_process_count;
 }
 
 // 其他功能函数（简化实现）
 void ftk_create_process(const char* command) {
     if (strlen(command) == 0) {
-        printf("[ERROR] 请指定要启动的程序路径\n");
+        ftk_print_error("[ERROR] 请指定要启动的程序路径\n");
         return;
     }
-    printf("[INFO] 尝试创建进程: %s\n", command);
-    printf("[INFO] 此功能在当前版本中暂不可用\n");
+    ftk_print_info("[INFO] 尝试创建进程: %s\n", command);
+    ftk_print_info("[INFO] 此功能在当前版本中暂不可用\n");
 }
 
 int ftk_terminate_process(DWORD pid, int force) {
-    printf("[INFO] 尝试终止进程: PID=%lu\n", pid);
-    printf("[INFO] 此功能在当前版本中暂不可用\n");
+    ftk_print_info("[INFO] 尝试终止进程: PID=%lu\n", pid);
+    ftk_print_info("[INFO] 此功能在当前版本中暂不可用\n");
     return 0;
 }
 
 void ftk_process_details(DWORD pid) {
-    printf("[INFO] 进程详情功能暂不可用\n");
+    ftk_print_info("[INFO] 进程详情功能暂不可用\n");
 }
 
 void ftk_search_process(const char* pattern, int case_sensitive) {
-    printf("[INFO] 搜索功能暂不可用\n");
+    ftk_print_info("[INFO] 搜索功能暂不可用\n");
 }
 
 void ftk_monitor_processes(int interval) {
-    printf("[INFO] 启动进程监控...\n");
+    ftk_print_info("[INFO] 启动进程监控...\n");
     
     // 直接调用监控插件
     ftk_execute_plugin("monitor", "");
 }
 
 void ftk_export_process_list(const char* filename) {
-    printf("[INFO] 导出功能暂不可用\n");
+    ftk_print_info("[INFO] 导出功能暂不可用\n");
 }
 
 void ftk_get_process_tree(DWORD root_pid, int depth) {
-    printf("[INFO] 进程树功能暂不可用\n");
+    ftk_print_info("[INFO] 进程树功能暂不可用\n");
 }
 
 void ftk_analyze_suspicious() {
-    printf("[INFO] 分析功能暂不可用\n");
+    ftk_print_info("[INFO] 分析功能暂不可用\n");
 }
 
 void ftk_detect_hollowing() {
-    printf("[INFO] 检测功能暂不可用\n");
+    ftk_print_info("[INFO] 检测功能暂不可用\n");
 }
 
 DWORD ftk_find_process(const char* name, int exact_match) {
-    printf("[INFO] 查找进程功能暂不可用\n");
+    ftk_print_info("[INFO] 查找进程功能暂不可用\n");
     return 0;
 }
 
@@ -818,15 +998,20 @@ char* ftk_format_time(FILETIME* ft) {
 
 // 插件列表显示
 void ftk_list_plugins() {
-    printf("\n=== 已加载插件 (%d) ===\n\n", g_plugin_count);
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    printf("\n=== 已加载插件 (%d) ===", g_plugin_count);
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    printf("\n\n");
     
     if (g_plugin_count == 0) {
-        printf("没有加载任何插件\n");
+        ftk_print_info("没有加载任何插件\n");
         return;
     }
     
     for (int i = 0; i < g_plugin_count; i++) {
+        ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY);
         printf("%d. %s\n", i + 1, g_plugins[i].name);
+        ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         printf("   描述: %s\n", g_plugins[i].description);
         printf("   配置接口: %s\n", g_plugins[i].config_func ? "支持" : "不支持");
         printf("\n");
@@ -837,20 +1022,25 @@ void ftk_list_plugins() {
 void ftk_plugin_help(const char* plugin_name) {
     for (int i = 0; i < g_plugin_count; i++) {
         if (_stricmp(g_plugins[i].name, plugin_name) == 0) {
-            printf("\n=== %s 插件帮助 ===\n\n", plugin_name);
+            ftk_set_color(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY);
+            printf("\n=== %s 插件帮助 ===", plugin_name);
+            ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            printf("\n\n");
             if (g_plugins[i].help_func != NULL) {
                 g_plugins[i].help_func();
             } else {
-                printf("该插件没有提供帮助信息\n");
+                ftk_print_info("该插件没有提供帮助信息\n");
             }
             
             if (g_plugins[i].config_func != NULL) {
+                ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
                 printf("\n[插件特性] 支持主程序配置修改\n");
+                ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
             }
             return;
         }
     }
-    printf("[ERROR] 未找到插件: %s\n", plugin_name);
+    ftk_print_error("[ERROR] 未找到插件: %s\n", plugin_name);
 }
 
 // 执行插件
@@ -858,7 +1048,7 @@ int ftk_execute_plugin(const char* plugin_name, const char* args) {
     for (int i = 0; i < g_plugin_count; i++) {
         if (_stricmp(g_plugins[i].name, plugin_name) == 0) {
             if (g_plugins[i].execute_func != NULL) {
-                printf("[PLUGIN] 执行插件: %s", plugin_name);
+                ftk_print_plugin("[PLUGIN] 执行插件: %s", plugin_name);
                 if (args != NULL && strlen(args) > 0) {
                     printf(" 参数: %s", args);
                 }
@@ -868,7 +1058,7 @@ int ftk_execute_plugin(const char* plugin_name, const char* args) {
                 ftk_log_operation("PLUGIN_EXECUTE", plugin_name, result == 0);
                 return 1;
             } else {
-                printf("[ERROR] 插件 '%s' 没有执行函数\n", plugin_name);
+                ftk_print_error("[ERROR] 插件 '%s' 没有执行函数\n", plugin_name);
                 return 1;
             }
         }
@@ -887,21 +1077,31 @@ void ftk_unload_plugins() {
 }
 
 void ftk_banner() {
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
     printf("\n===============================================\n");
+    ftk_set_color(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
     printf("    %s\n", g_main_config.banner_text);
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_INTENSITY);
     printf("        %s\n", g_main_config.welcome_message);
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
     printf("===============================================\n");
-    printf("[INFO] 输入 'help' 查看命令列表\n");
-    printf("[INFO] 输入 'plugins' 查看已加载插件\n");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    
+    ftk_print_info("[INFO] 输入 'help' 查看命令列表\n");
+    ftk_print_info("[INFO] 输入 'plugins' 查看已加载插件\n");
     if (g_main_config.enable_advanced_features) {
-        printf("[INFO] 高级功能已启用 (紧急避险系统就绪)\n");
+        ftk_print_warning("[INFO] 高级功能已启用 (紧急避险系统就绪)\n");
     }
 }
 
 void ftk_print_help() {
+    ftk_set_color(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
     printf("\n=== FTK 命令手册 ===\n\n");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
     printf("核心功能:\n");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     printf("  list                    - 列出所有进程\n");
     printf("  list -d                 - 详细进程列表\n");
     printf("  plugins                 - 列出所有插件\n");
@@ -910,15 +1110,23 @@ void ftk_print_help() {
     printf("  history                 - 显示命令历史\n");
     printf("  clear/cls               - 清屏\n\n");
     
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_INTENSITY);
     printf("紧急避险系统:\n");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     printf("  debug bsod              - 触发系统蓝屏紧急避险\n");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_INTENSITY);
     printf("  ??  警告: 此命令将导致系统崩溃！\n\n");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     
+    ftk_set_color(FOREGROUND_INTENSITY);
     printf("调试命令:\n");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     printf("  test                    - 功能测试\n");
     printf("  debug                   - 调试信息\n\n");
     
+    ftk_set_color(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
     printf("系统命令:\n");
+    ftk_set_color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     printf("  help                    - 显示此帮助\n");
     printf("  exit                    - 退出FTK\n");
 }
@@ -927,7 +1135,10 @@ int main() {
     // 设置控制台编码
     setup_console_encoding();
     
-    printf("正在初始化 Forensic Toolkit...\n");
+    // 启用虚拟终端处理
+    ftk_enable_virtual_terminal();
+    
+    ftk_print_system("正在初始化 Forensic Toolkit...\n");
     
     char command[MAX_COMMAND_LENGTH];
     
@@ -938,23 +1149,23 @@ int main() {
     ftk_init_input_system();
     
     // 初始刷新进程列表
-    printf("正在加载进程列表...\n");
+    ftk_print_system("正在加载进程列表...\n");
     __try {
         ftk_refresh_process_list();
-        printf("初始化完成！找到 %d 个进程\n", g_process_count);
+        ftk_print_success("初始化完成！找到 %d 个进程\n", g_process_count);
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {
-        printf("[ERROR] 进程列表加载失败，程序将继续运行但功能可能受限\n");
+        ftk_print_error("[ERROR] 进程列表加载失败，程序将继续运行但功能可能受限\n");
         g_process_count = 0;
     }
     
     while (1) {
-        printf("\nForensic_Toolkit> ");
+        ftk_print_prompt();
         fflush(stdout);
         
         int len = ftk_readline(command, sizeof(command));
         if (len == -1) {
-            printf("[INFO] 用户中断，退出程序\n");
+            ftk_print_info("[INFO] 用户中断，退出程序\n");
             break;
         }
         if (len == 0) {
@@ -963,7 +1174,7 @@ int main() {
         
         // 命令解析
         if (strcmp(command, "exit") == 0 || strcmp(command, "quit") == 0) {
-            printf("[INFO] Forensic Toolkit 会话结束\n");
+            ftk_print_info("[INFO] Forensic Toolkit 会话结束\n");
             break;
         }
         else if (strcmp(command, "help") == 0 || strcmp(command, "?") == 0) {
@@ -986,18 +1197,18 @@ int main() {
             ftk_trigger_bsod();
         }
         else if (strcmp(command, "test") == 0) {
-            printf("[TEST] 程序运行正常\n");
-            printf("[TEST] 进程数量: %d\n", g_process_count);
-            printf("[TEST] 插件数量: %d\n", g_plugin_count);
-            printf("[TEST] 输入测试完成\n");
+            ftk_print_debug("[TEST] 程序运行正常\n");
+            ftk_print_debug("[TEST] 进程数量: %d\n", g_process_count);
+            ftk_print_debug("[TEST] 插件数量: %d\n", g_plugin_count);
+            ftk_print_debug("[TEST] 输入测试完成\n");
         }
         else if (strcmp(command, "debug") == 0) {
-            printf("[DEBUG] 调试信息:\n");
-            printf("  g_process_count: %d\n", g_process_count);
-            printf("  g_plugin_count: %d\n", g_plugin_count);
-            printf("  主程序配置: %s\n", g_main_config.banner_text);
+            ftk_print_debug("[DEBUG] 调试信息:\n");
+            ftk_print_debug("  g_process_count: %d\n", g_process_count);
+            ftk_print_debug("  g_plugin_count: %d\n", g_plugin_count);
+            ftk_print_debug("  主程序配置: %s\n", g_main_config.banner_text);
             if (g_process_count > 0) {
-                printf("  第一个进程: %s (PID: %lu)\n", g_process_list[0].name, g_process_list[0].pid);
+                ftk_print_debug("  第一个进程: %s (PID: %lu)\n", g_process_list[0].name, g_process_list[0].pid);
             }
         }
         else if (strncmp(command, "plugin ", 7) == 0) {
@@ -1011,7 +1222,7 @@ int main() {
                     ftk_execute_plugin(plugin_name, args);
                 }
             } else {
-                printf("[ERROR] 无效的插件命令格式\n");
+                ftk_print_error("[ERROR] 无效的插件命令格式\n");
             }
         }
         else if (strcmp(command, "list") == 0) {
@@ -1020,7 +1231,7 @@ int main() {
                 ftk_list_processes(0);
             }
             __except (EXCEPTION_EXECUTE_HANDLER) {
-                printf("[ERROR] 进程列表操作失败\n");
+                ftk_print_error("[ERROR] 进程列表操作失败\n");
             }
         }
         else if (strcmp(command, "list -d") == 0 || strcmp(command, "list detailed") == 0) {
@@ -1029,7 +1240,7 @@ int main() {
                 ftk_list_processes(1);
             }
             __except (EXCEPTION_EXECUTE_HANDLER) {
-                printf("[ERROR] 进程列表操作失败\n");
+                ftk_print_error("[ERROR] 进程列表操作失败\n");
             }
         }
         else if (strncmp(command, "create ", 7) == 0) {
@@ -1038,7 +1249,7 @@ int main() {
                 ftk_refresh_process_list();
             }
             __except (EXCEPTION_EXECUTE_HANDLER) {
-                printf("[WARNING] 进程列表刷新失败\n");
+                ftk_print_warning("[WARNING] 进程列表刷新失败\n");
             }
         }
         else if (strncmp(command, "kill ", 5) == 0) {
@@ -1049,11 +1260,11 @@ int main() {
                         ftk_refresh_process_list();
                     }
                     __except (EXCEPTION_EXECUTE_HANDLER) {
-                        printf("[WARNING] 进程列表刷新失败\n");
+                        ftk_print_warning("[WARNING] 进程列表刷新失败\n");
                     }
                 }
             } else {
-                printf("[ERROR] 无效的进程ID\n");
+                ftk_print_error("[ERROR] 无效的进程ID\n");
             }
         }
         else if (strncmp(command, "kill -f ", 8) == 0) {
@@ -1064,27 +1275,27 @@ int main() {
                         ftk_refresh_process_list();
                     }
                     __except (EXCEPTION_EXECUTE_HANDLER) {
-                        printf("[WARNING] 进程列表刷新失败\n");
+                        ftk_print_warning("[WARNING] 进程列表刷新失败\n");
                     }
                 }
             } else {
-                printf("[ERROR] 无效的进程ID\n");
+                ftk_print_error("[ERROR] 无效的进程ID\n");
             }
         }
         else if (strncmp(command, "killbyname ", 11) == 0) {
             DWORD pid = ftk_find_process(command + 11, 1);
             if (pid != 0) {
-                printf("找到进程: %s (PID: %lu)\n", command + 11, pid);
+                ftk_print_info("找到进程: %s (PID: %lu)\n", command + 11, pid);
                 if (ftk_terminate_process(pid, 0)) {
                     __try {
                         ftk_refresh_process_list();
                     }
                     __except (EXCEPTION_EXECUTE_HANDLER) {
-                        printf("[WARNING] 进程列表刷新失败\n");
+                        ftk_print_warning("[WARNING] 进程列表刷新失败\n");
                     }
                 }
             } else {
-                printf("未找到进程: %s\n", command + 11);
+                ftk_print_warning("未找到进程: %s\n", command + 11);
             }
         }
         else if (strncmp(command, "details ", 8) == 0) {
@@ -1092,7 +1303,7 @@ int main() {
             if (pid > 0) {
                 ftk_process_details(pid);
             } else {
-                printf("[ERROR] 无效的进程ID\n");
+                ftk_print_error("[ERROR] 无效的进程ID\n");
             }
         }
         else if (strncmp(command, "search ", 7) == 0) {
@@ -1133,7 +1344,7 @@ int main() {
         }
         else if (strcmp(command, "refresh") == 0) {
             ftk_refresh_process_list();
-            printf("[INFO] 进程列表已刷新\n");
+            ftk_print_info("[INFO] 进程列表已刷新\n");
         }
         else {
             // 尝试作为插件命令执行
@@ -1142,10 +1353,10 @@ int main() {
             
             if (sscanf_s(command, "%63s %511[^\n]", plugin_cmd, (unsigned)sizeof(plugin_cmd), plugin_args, (unsigned)sizeof(plugin_args)) >= 1) {
                 if (!ftk_execute_plugin(plugin_cmd, plugin_args)) {
-                    printf("[ERROR] 未知命令: %s\n输入 'help' 查看可用命令\n", command);
+                    ftk_print_error("[ERROR] 未知命令: %s\n输入 'help' 查看可用命令\n", command);
                 }
             } else {
-                printf("[ERROR] 未知命令: %s\n输入 'help' 查看可用命令\n", command);
+                ftk_print_error("[ERROR] 未知命令: %s\n输入 'help' 查看可用命令\n", command);
             }
         }
     }
